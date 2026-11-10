@@ -5,10 +5,12 @@ import axiom.daos.tourmate.platform.tourmonitoring.domain.model.aggregates.Activ
 import axiom.daos.tourmate.platform.tourmonitoring.domain.repositories.ActiveTourRepository;
 import axiom.daos.tourmate.platform.tourmonitoring.infrastructure.persistence.jpa.assemblers.ActiveTourPersistenceAssembler;
 import axiom.daos.tourmate.platform.tourmonitoring.infrastructure.persistence.jpa.repositories.ActiveTourPersistenceRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public class ActiveTourRepositoryImpl  implements ActiveTourRepository {
 
     private final ActiveTourPersistenceRepository activeTourPersistenceRepository;
@@ -24,6 +26,14 @@ public class ActiveTourRepositoryImpl  implements ActiveTourRepository {
     @Override
     public void deleteById(Long id) {
         activeTourPersistenceRepository.deleteById(id);
+    }
+
+    @Override
+    public ActiveTour save(ActiveTour activeTour) {
+        var saved = activeTourPersistenceRepository.save(ActiveTourPersistenceAssembler.toPersistenceFromDomain(activeTour));
+        var savedActiveTour = ActiveTourPersistenceAssembler.toDomainFromPersistence(saved);
+        domainEventPublisher.publishAndClearEvents(activeTour);
+        return savedActiveTour;
     }
 
     @Override
