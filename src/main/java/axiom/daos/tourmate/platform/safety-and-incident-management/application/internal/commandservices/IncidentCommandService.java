@@ -11,10 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.Optional;
-import java.util.UUID;
 
 @NullMarked
 @Service
+/**
+ * Service class for handling commands related to incidents, such as creating, updating, and deleting incidents.
+ */
 public class IncidentCommandService {
 
     private final IncidentRepository incidentRepository;
@@ -24,8 +26,15 @@ public class IncidentCommandService {
     }
 
     @Transactional
+    /**
+     *
+     * Creates a new incident with the provided information and saves it to the repository.
+     * If reportedAt is null, it will be set to the current date and time.
+     * If status is null, it will be set to OPEN.
+     * If severity is null, it will be set to MEDIUM.
+     * If reporterRole is null, it will be set to "TOURIST".
+     */
     public Incident createIncident(
-            @Nullable String uuid,
             Long activeTourId,
             Long reportedByUserId,
             String description,
@@ -37,12 +46,7 @@ public class IncidentCommandService {
             @Nullable String resolutionNote,
             @Nullable String reporterRole
     ) {
-        String generatedUuid = (uuid == null || uuid.isBlank())
-                ? "off-" + UUID.randomUUID().toString().substring(0, 7)
-                : uuid;
-
         Incident incident = new Incident(
-                generatedUuid,
                 activeTourId,
                 reportedByUserId,
                 description,
@@ -59,6 +63,9 @@ public class IncidentCommandService {
     }
 
     @Transactional
+    /**
+     * Updates an existing incident with the provided information.
+     */
     public Optional<Incident> updateIncident(
             Long id,
             Long activeTourId,
@@ -90,6 +97,13 @@ public class IncidentCommandService {
     }
 
     @Transactional
+
+    /**
+     * Deletes an incident by its ID.
+     *
+     * @param id the ID of the incident to delete
+     * @return true if the incident was deleted, false if it did not exist
+     */
     public boolean deleteIncident(Long id) {
         if (!incidentRepository.existsById(id)) {
             return false;
