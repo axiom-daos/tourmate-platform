@@ -10,4 +10,5 @@ public interface ActiveTourRepository {
     List<ActiveTour> findAll();
     boolean existsById(Long id);
     void deleteById(Long id);
+    ActiveTour save(ActiveTour activeTour);
 }
