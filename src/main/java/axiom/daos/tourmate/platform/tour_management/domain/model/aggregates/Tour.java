@@ -95,4 +95,13 @@ public class Tour extends AbstractDomainAggregateRoot<Tour> {
             this.checkpoints.get(i).changeOrder(i + 1);
         }
     }
+
+    public static Tour reconstitute(Long id, AgencyId agencyId, TourDetails tourDetails, List<Checkpoint> checkpoints, TourStatus status) {
+        var tour = new Tour(agencyId, tourDetails);
+        tour.id = id;
+        tour.checkpoints = new ArrayList<>(checkpoints);
+        tour.status = status;
+
+        return tour;
+    }
 }

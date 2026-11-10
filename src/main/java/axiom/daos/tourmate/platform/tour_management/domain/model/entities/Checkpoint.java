@@ -54,5 +54,12 @@ public class Checkpoint {
         this.description = newDescription.trim();
     }
 
+    public static Checkpoint reconstitute(Long id, String name, Coordinates location, int order, String description) {
+        var checkpoint = new Checkpoint(name, location, order, description);
+        checkpoint.id = id;
+
+        return checkpoint;
+    }
+
 
 }
