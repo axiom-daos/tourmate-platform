@@ -2,8 +2,20 @@ package axiom.daos.tourmate.platform.safety_and_incident_management.interfaces.r
 
 import java.util.Date;
 
+/**
+ * Represents the resource for updating an existing incident reported during a tour. This resource captures the necessary details such as the associated tour, reporter information, incident description, location, status, severity, and any resolution notes.
+ * @param activeTourId
+ * @param reportedByUserId
+ * @param description
+ * @param latitude
+ * @param longitude
+ * @param reportedAt
+ * @param status
+ * @param severity
+ * @param resolutionNote
+ * @param reporterRole
+ */
 public record UpdateIncidentResource(
-        String uuid,
         Long activeTourId,
         Long reportedByUserId,
         String description,
