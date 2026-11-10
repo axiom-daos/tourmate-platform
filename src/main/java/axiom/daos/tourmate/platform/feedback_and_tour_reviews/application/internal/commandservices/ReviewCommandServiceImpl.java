@@ -15,34 +15,44 @@ import axiom.daos.tourmate.platform.feedback_and_tour_reviews.domain.repositorie
 import axiom.daos.tourmate.platform.shared.application.result.ApplicationError;
 import axiom.daos.tourmate.platform.shared.application.result.Result;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+
+import java.util.Locale;
 
 /**
  * Implementación del servicio de comandos de reseñas.
  *
- * Contiene la lógica de aplicación necesaria
- * para crear, actualizar y eliminar reseñas.
+ * Gestiona la creación, actualización y eliminación
+ * de reseñas turísticas.
  *
- * Utiliza los repositorios del dominio
- * sin depender directamente de JPA.
+ * Reglas principales:
+ * - Un usuario solo puede reseñar un tour una vez.
+ * - No se permite cambiar el usuario ni el tour.
+ * - Solo se puede modificar la calificación.
+ * - Los comentarios se eliminan junto con la reseña.
  *
  * Bounded Context: Feedback and Tour Reviews.
  */
 @Service
-public class ReviewCommandServiceImpl implements ReviewCommandService {
+public class ReviewCommandServiceImpl
+        implements ReviewCommandService {
 
-    // Repositorio para gestionar las reseñas.
+    // Repositorio encargado de gestionar las reseñas.
     private final ReviewRepository reviewRepository;
 
-    // Repositorio para gestionar los comentarios.
+    // Repositorio encargado de gestionar los comentarios.
     private final CommentRepository commentRepository;
+
+    // Nombre de la restricción de PostgreSQL
+    // que impide reseñas duplicadas.
+    private static final String UNIQUE_REVIEW_CONSTRAINT =
+            "uk_reviews_user_tour";
 
     /**
      * Constructor con inyección de dependencias.
-     *
-     * Spring proporcionará las implementaciones
-     * de los repositorios cuando estén disponibles.
      */
     public ReviewCommandServiceImpl(
             ReviewRepository reviewRepository,
@@ -55,8 +65,9 @@ public class ReviewCommandServiceImpl implements ReviewCommandService {
     /**
      * Procesa la creación de una nueva reseña.
      *
-     * Verifica que el usuario no tenga otra
-     * reseña registrada para el mismo tour.
+     * Comprueba duplicados antes de guardar
+     * y también controla los conflictos detectados
+     * por la restricción UNIQUE de PostgreSQL.
      *
      * @param command Datos de creación.
      * @return Reseña creada o error de aplicación.
@@ -67,15 +78,15 @@ public class ReviewCommandServiceImpl implements ReviewCommandService {
     ) {
 
         try {
-            // Comprobamos si el usuario ya calificó este tour.
+
+            // Comprobamos si el usuario ya calificó el tour.
             boolean alreadyReviewed =
                     reviewRepository.existsByUserIdAndTourId(
                             command.userId(),
                             command.tourId()
                     );
 
-            // Evitamos que el mismo usuario registre
-            // más de una reseña para el mismo tour.
+            // Rechazamos las reseñas duplicadas.
             if (alreadyReviewed) {
                 return Result.failure(
                         ApplicationError.conflict(
@@ -93,14 +104,17 @@ public class ReviewCommandServiceImpl implements ReviewCommandService {
             );
 
             // Guardamos la reseña mediante el repositorio.
-            Review savedReview = reviewRepository.save(review);
+            // El adaptador utiliza saveAndFlush() para
+            // detectar restricciones durante la operación.
+            Review savedReview =
+                    reviewRepository.save(review);
 
             // Devolvemos la reseña almacenada.
             return Result.success(savedReview);
 
         } catch (IllegalArgumentException exception) {
 
-            // Convertimos errores de validación
+            // Convertimos las validaciones del dominio
             // en errores de aplicación.
             return Result.failure(
                     ApplicationError.validationError(
@@ -109,10 +123,32 @@ public class ReviewCommandServiceImpl implements ReviewCommandService {
                     )
             );
 
+        } catch (DataIntegrityViolationException exception) {
+
+            // Comprobamos si PostgreSQL rechazó
+            // una reseña por usuario y tour duplicados.
+            if (isDuplicateReviewConstraint(exception)) {
+
+                return Result.failure(
+                        ApplicationError.conflict(
+                                "Review",
+                                "El usuario ya registró una reseña para este tour."
+                        )
+                );
+            }
+
+            // No todas las violaciones de integridad
+            // son duplicados. No las confundimos con 409.
+            return Result.failure(
+                    ApplicationError.unexpected(
+                            "create-review",
+                            "Error de integridad al guardar la reseña."
+                    )
+            );
+
         } catch (RuntimeException exception) {
 
-            // Informamos de un fallo inesperado
-            // durante la creación.
+            // Gestionamos otros fallos inesperados.
             return Result.failure(
                     ApplicationError.unexpected(
                             "create-review",
@@ -123,26 +159,68 @@ public class ReviewCommandServiceImpl implements ReviewCommandService {
     }
 
     /**
+     * Comprueba si un error de persistencia
+     * corresponde a la restricción que impide
+     * registrar reseñas duplicadas.
+     *
+     * Revisa también las causas internas porque
+     * Spring puede envolver el error de PostgreSQL.
+     *
+     * @param exception Error recibido.
+     * @return true cuando identifica la restricción.
+     */
+    private boolean isDuplicateReviewConstraint(
+            Throwable exception
+    ) {
+
+        Throwable current = exception;
+
+        // Recorremos la cadena de excepciones.
+        while (current != null) {
+
+            String message = current.getMessage();
+
+            // Buscamos el nombre exacto de la restricción.
+            if (message != null
+                    && message.toLowerCase(Locale.ROOT)
+                    .contains(UNIQUE_REVIEW_CONSTRAINT)) {
+
+                return true;
+            }
+
+            // Revisamos la causa del error.
+            current = current.getCause();
+        }
+
+        return false;
+    }
+
+    /**
      * Procesa la actualización de una reseña.
      *
-     * Comprueba que exista y evita que la edición
-     * produzca una reseña duplicada.
+     * Conserva el usuario y el tour originales.
+     * Solamente permite modificar la calificación.
      *
      * @param command Datos de actualización.
      * @return Reseña actualizada o error.
      */
     @Override
+    @Transactional
     public Result<Review, ApplicationError> handle(
             UpdateReviewCommand command
     ) {
 
         try {
-            // Buscamos la reseña que se desea actualizar.
-            var reviewOptional =
-                    reviewRepository.findById(command.reviewId());
 
-            // Verificamos que realmente exista.
+            // Buscamos la reseña solicitada.
+            var reviewOptional =
+                    reviewRepository.findById(
+                            command.reviewId()
+                    );
+
+            // Verificamos que exista.
             if (reviewOptional.isEmpty()) {
+
                 return Result.failure(
                         ApplicationError.notFound(
                                 "Review",
@@ -151,45 +229,48 @@ public class ReviewCommandServiceImpl implements ReviewCommandService {
                 );
             }
 
-            // Comprobamos que no exista otra reseña
-            // del mismo usuario para el mismo tour.
-            boolean duplicated =
-                    reviewRepository.existsByUserIdAndTourIdAndIdNot(
-                            command.userId(),
-                            command.tourId(),
-                            command.reviewId()
+            // Recuperamos el agregado original.
+            Review review = reviewOptional.get();
+
+            // Verificamos que no se intente
+            // modificar el propietario de la reseña.
+            boolean sameUser =
+                    review.getUserId().equals(
+                            command.userId()
                     );
 
-            if (duplicated) {
+            // Verificamos que el tour sea el original.
+            boolean sameTour =
+                    review.getTourId().equals(
+                            command.tourId()
+                    );
+
+            // No permitimos cambiar estas relaciones.
+            if (!sameUser || !sameTour) {
+
                 return Result.failure(
-                        ApplicationError.conflict(
-                                "Review",
-                                "Ya existe otra reseña del usuario para este tour."
+                        ApplicationError.businessRuleViolation(
+                                "Review association",
+                                "No se puede cambiar el usuario "
+                                        + "ni el tour de una reseña existente."
                         )
                 );
             }
 
-            // Recuperamos el agregado existente.
-            Review review = reviewOptional.get();
-
-            // Actualizamos sus datos respetando
-            // las validaciones del dominio.
-            review.updateInformation(
-                    command.userId(),
-                    command.tourId(),
+            // Actualizamos únicamente la calificación.
+            // El Value Object Rating valida el valor.
+            review.updateRating(
                     command.rating()
             );
 
-            // Persistimos la información actualizada.
-            Review updatedReview = reviewRepository.save(review);
+            // Guardamos los cambios.
+            Review updatedReview =
+                    reviewRepository.save(review);
 
-            // Devolvemos el resultado exitoso.
             return Result.success(updatedReview);
 
         } catch (IllegalArgumentException exception) {
 
-            // Capturamos errores relacionados
-            // con las reglas de validación.
             return Result.failure(
                     ApplicationError.validationError(
                             "Review",
@@ -199,8 +280,12 @@ public class ReviewCommandServiceImpl implements ReviewCommandService {
 
         } catch (RuntimeException exception) {
 
-            // Capturamos fallos inesperados
-            // durante la actualización.
+            // Revertimos la transacción si la
+            // actualización falla inesperadamente.
+            TransactionAspectSupport
+                    .currentTransactionStatus()
+                    .setRollbackOnly();
+
             return Result.failure(
                     ApplicationError.unexpected(
                             "update-review",
@@ -213,14 +298,11 @@ public class ReviewCommandServiceImpl implements ReviewCommandService {
     /**
      * Procesa la eliminación de una reseña.
      *
-     * Primero elimina sus comentarios asociados
-     * y después elimina la reseña.
-     *
-     * La transacción garantiza que ambas
-     * operaciones se completen juntas.
+     * Primero elimina los comentarios relacionados
+     * y después la reseña, dentro de una transacción.
      *
      * @param command Identificador de la reseña.
-     * @return true si fue eliminada o un error.
+     * @return true si se eliminó o error.
      */
     @Override
     @Transactional
@@ -229,11 +311,15 @@ public class ReviewCommandServiceImpl implements ReviewCommandService {
     ) {
 
         try {
-            // Verificamos si la reseña existe.
+
+            // Verificamos que la reseña exista.
             boolean exists =
-                    reviewRepository.existsById(command.reviewId());
+                    reviewRepository.existsById(
+                            command.reviewId()
+                    );
 
             if (!exists) {
+
                 return Result.failure(
                         ApplicationError.notFound(
                                 "Review",
@@ -242,27 +328,23 @@ public class ReviewCommandServiceImpl implements ReviewCommandService {
                 );
             }
 
-            // Eliminamos primero los comentarios
-            // relacionados con la reseña.
+            // Eliminamos los comentarios asociados.
             commentRepository.deleteByReviewId(
                     command.reviewId()
             );
 
-            // Eliminamos la reseña solicitada.
+            // Eliminamos la reseña.
             reviewRepository.deleteById(
                     command.reviewId()
             );
 
-            // Indicamos que la eliminación fue exitosa.
             return Result.success(true);
 
         } catch (RuntimeException exception) {
 
-            // Como devolvemos un Result en lugar
-            // de propagar la excepción, marcamos
-            // la transacción para revertir los cambios.
-            org.springframework.transaction.interceptor
-                    .TransactionAspectSupport
+            // Revertimos todos los cambios
+            // cuando ocurre un fallo.
+            TransactionAspectSupport
                     .currentTransactionStatus()
                     .setRollbackOnly();
 

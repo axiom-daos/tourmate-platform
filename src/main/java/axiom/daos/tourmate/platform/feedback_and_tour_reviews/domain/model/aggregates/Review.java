@@ -1,6 +1,11 @@
+
 package axiom.daos.tourmate.platform.feedback_and_tour_reviews.domain.model.aggregates;
 
+import axiom.daos.tourmate.platform.feedback_and_tour_reviews.domain.model.valueobjects.Rating;
+
 import axiom.daos.tourmate.platform.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
+
+import lombok.AccessLevel;
 import lombok.Getter;
 
 import java.time.Instant;
@@ -12,6 +17,10 @@ import java.util.Objects;
  * Representa la calificación que un usuario
  * realiza sobre un tour de TourMate.
  *
+ * Utiliza el Value Object Rating para garantizar
+ * que las calificaciones cumplan las reglas
+ * establecidas por el negocio.
+ *
  * Bounded Context: Feedback and Tour Reviews.
  */
 @Getter
@@ -20,49 +29,68 @@ public class Review extends AbstractDomainAggregateRoot<Review> {
     // Identificador único de la reseña.
     private Long id;
 
-    // Identificador del usuario que realiza la reseña.
-    private Long userId;
+    // Identificador del usuario propietario.
+    // No puede modificarse después de la creación.
+    private final Long userId;
 
-    // Identificador del tour que se está calificando.
-    private Long tourId;
+    // Identificador del tour calificado.
+    // No puede modificarse después de la creación.
+    private final Long tourId;
 
-    // Calificación del tour: de 1 a 5 estrellas.
-    private Integer rating;
+    // Value Object que contiene la calificación.
+    // Evitamos generar un getter automático porque
+    // debemos conservar el contrato Integer.
+    @Getter(AccessLevel.NONE)
+    private Rating rating;
 
-    // Fecha y hora de creación de la reseña.
+    // Fecha original de creación de la reseña.
     private Instant createdAt;
 
     /**
      * Constructor para registrar una nueva reseña.
      *
-     * El identificador será asignado posteriormente
-     * por la base de datos.
+     * El identificador se asignará posteriormente
+     * cuando la reseña se guarde en PostgreSQL.
      *
      * @param userId Identificador del usuario.
      * @param tourId Identificador del tour.
      * @param rating Calificación entre 1 y 5.
      */
-    public Review(Long userId, Long tourId, Integer rating) {
+    public Review(
+            Long userId,
+            Long tourId,
+            Integer rating
+    ) {
 
-        // Comprobamos las reglas del negocio.
+        // Comprobamos los identificadores.
         validateUserId(userId);
         validateTourId(tourId);
-        validateRating(rating);
 
         // Inicializamos los datos de la reseña.
         this.id = null;
         this.userId = userId;
         this.tourId = tourId;
-        this.rating = rating;
+
+        // Creamos el Value Object.
+        // Rating valida automáticamente el valor.
+        this.rating = Rating.of(rating);
+
+        // Registramos la fecha de creación.
         this.createdAt = Instant.now();
     }
 
     /**
-     * Reconstruye una reseña existente desde
-     * los datos almacenados en PostgreSQL.
+     * Reconstruye una reseña existente utilizando
+     * los datos recuperados desde PostgreSQL.
      *
-     * Esta operación será utilizada por el
-     * adaptador de persistencia.
+     * Conserva el ID y la fecha de creación original.
+     *
+     * @param id Identificador de la reseña.
+     * @param userId Usuario propietario.
+     * @param tourId Tour relacionado.
+     * @param rating Calificación almacenada.
+     * @param createdAt Fecha original de creación.
+     * @return Agregado reconstruido.
      */
     public static Review reconstitute(
             Long id,
@@ -75,14 +103,19 @@ public class Review extends AbstractDomainAggregateRoot<Review> {
         // Validamos el identificador almacenado.
         validateId(id);
 
-        // La fecha almacenada no debe ser nula.
+        // Comprobamos la fecha de creación.
         Objects.requireNonNull(
                 createdAt,
                 "La fecha de creación es obligatoria."
         );
 
-        // Construimos el agregado con sus reglas.
-        Review review = new Review(userId, tourId, rating);
+        // Creamos el agregado aplicando las
+        // mismas validaciones del dominio.
+        Review review = new Review(
+                userId,
+                tourId,
+                rating
+        );
 
         // Recuperamos los valores originales.
         review.id = id;
@@ -92,7 +125,9 @@ public class Review extends AbstractDomainAggregateRoot<Review> {
     }
 
     /**
-     * Valida el identificador de una reseña existente.
+     * Valida el identificador de una reseña.
+     *
+     * @param id Identificador recibido.
      */
     private static void validateId(Long id) {
 
@@ -105,6 +140,8 @@ public class Review extends AbstractDomainAggregateRoot<Review> {
 
     /**
      * Comprueba que el usuario tenga un ID válido.
+     *
+     * @param userId Identificador del usuario.
      */
     private static void validateUserId(Long userId) {
 
@@ -117,6 +154,8 @@ public class Review extends AbstractDomainAggregateRoot<Review> {
 
     /**
      * Comprueba que el tour tenga un ID válido.
+     *
+     * @param tourId Identificador del tour.
      */
     private static void validateTourId(Long tourId) {
 
@@ -128,53 +167,35 @@ public class Review extends AbstractDomainAggregateRoot<Review> {
     }
 
     /**
-     * Valida que la calificación sea de 1 a 5.
+     * Obtiene la calificación como Integer.
+     *
+     * Conservamos este método para mantener
+     * la compatibilidad con los assemblers,
+     * los repositorios y los recursos REST.
+     *
+     * @return Calificación entre 1 y 5.
      */
-    private static void validateRating(Integer rating) {
+    public Integer getRating() {
 
-        if (rating == null || rating < 1 || rating > 5) {
-            throw new IllegalArgumentException(
-                    "La calificación debe estar entre 1 y 5."
-            );
-        }
+        // Convertimos el Value Object en un entero.
+        return rating.value();
     }
 
     /**
-     * Actualiza la información de una reseña.
+     * Actualiza únicamente la calificación.
      *
-     * Permite modificar el usuario, el tour
-     * y la calificación, respetando las reglas.
+     * El usuario, el tour y la fecha de creación
+     * permanecen sin modificaciones.
      *
-     * Las autorizaciones y los duplicados serán
-     * comprobados en los servicios correspondientes.
-     */
-    public Review updateInformation(
-            Long userId,
-            Long tourId,
-            Integer rating
-    ) {
-
-        // Validamos antes de modificar los datos.
-        validateUserId(userId);
-        validateTourId(tourId);
-        validateRating(rating);
-
-        // Actualizamos las propiedades.
-        this.userId = userId;
-        this.tourId = tourId;
-        this.rating = rating;
-
-        return this;
-    }
-
-    /**
-     * Modifica únicamente la calificación.
+     * @param rating Nueva calificación.
+     * @return Agregado actualizado.
      */
     public Review updateRating(Integer rating) {
 
-        validateRating(rating);
-
-        this.rating = rating;
+        // Creamos un nuevo Value Object validado.
+        // Si el valor es inválido, se lanza
+        // una excepción antes de modificar el estado.
+        this.rating = Rating.of(rating);
 
         return this;
     }

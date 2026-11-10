@@ -1,15 +1,19 @@
+
 package axiom.daos.tourmate.platform.feedback_and_tour_reviews.domain.model.valueobjects;
 
 /**
  * Value Object que representa la calificación
- * que un usuario asigna a un tour turístico.
+ * de una reseña turística.
  *
  * Una calificación válida debe ser un número
  * entero comprendido entre 1 y 5 estrellas.
  *
+ * Este objeto es inmutable y centraliza
+ * las reglas de validación de las calificaciones.
+ *
  * Bounded Context: Feedback and Tour Reviews.
  *
- * @param value Valor de la calificación.
+ * @param value Valor numérico de la calificación.
  */
 public record Rating(Integer value) {
 
@@ -22,19 +26,19 @@ public record Rating(Integer value) {
     /**
      * Constructor compacto del Value Object.
      *
-     * Comprueba que la calificación cumpla
-     * las reglas del negocio.
+     * Comprueba que la calificación sea válida
+     * antes de crear una instancia.
      */
     public Rating {
 
-        // Verificamos que el valor no sea nulo.
+        // La calificación es obligatoria.
         if (value == null) {
             throw new IllegalArgumentException(
                     "La calificación no puede ser nula."
             );
         }
 
-        // Comprobamos que esté entre 1 y 5.
+        // Solo permitimos valores entre 1 y 5.
         if (value < MIN_RATING || value > MAX_RATING) {
             throw new IllegalArgumentException(
                     "La calificación debe estar entre 1 y 5."
@@ -43,23 +47,23 @@ public record Rating(Integer value) {
     }
 
     /**
-     * Crea una instancia de Rating a partir
+     * Crea una calificación a partir
      * de un valor numérico.
      *
      * @param value Calificación recibida.
-     * @return Un Rating válido.
+     * @return Value Object validado.
      */
     public static Rating of(Integer value) {
         return new Rating(value);
     }
 
     /**
-     * Devuelve la calificación como entero.
+     * Obtiene la calificación como un entero.
      *
-     * Este método será útil al convertir
-     * el Value Object en un dato de persistencia.
+     * Se utiliza para convertir el Value Object
+     * en datos que pueda manejar JPA o la API REST.
      *
-     * @return Valor de la calificación.
+     * @return Calificación numérica.
      */
     public int asInt() {
         return value;
@@ -68,7 +72,7 @@ public record Rating(Integer value) {
     /**
      * Indica si la calificación es la máxima.
      *
-     * @return true cuando equivale a 5 estrellas.
+     * @return true cuando tiene 5 estrellas.
      */
     public boolean isMaximum() {
         return value == MAX_RATING;
@@ -77,7 +81,7 @@ public record Rating(Integer value) {
     /**
      * Indica si la calificación es la mínima.
      *
-     * @return true cuando equivale a 1 estrella.
+     * @return true cuando tiene 1 estrella.
      */
     public boolean isMinimum() {
         return value == MIN_RATING;
