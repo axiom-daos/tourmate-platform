@@ -8,9 +8,11 @@ import org.jspecify.annotations.NullMarked;
 import java.util.Date;
 
 @NullMarked
+/**
+ * Represents an incident reported during a tour, encapsulating details such as the tour ID, reporter ID, description, location, status, severity, and resolution information.
+ */
 public class Incident extends AbstractDomainAggregateRoot<Incident> {
     private Long id;
-    private String uuid;
     private Long activeTourId;
     private Long reportedByUserId;
     private String description;
@@ -22,10 +24,23 @@ public class Incident extends AbstractDomainAggregateRoot<Incident> {
     private String resolutionNote;
     private String reporterRole;
 
-    public Incident(String uuid, Long activeTourId, Long reportedByUserId, String description,
+    /**
+     * Constructs a new Incident with the specified details.
+     * @param activeTourId
+     * @param reportedByUserId
+     * @param description
+     * @param latitude
+     * @param longitude
+     * @param reportedAt
+     * @param status
+     * @param severity
+     * @param resolutionNote
+     * @param reporterRole
+     */
+
+    public Incident(Long activeTourId, Long reportedByUserId, String description,
                     Double latitude, Double longitude, Date reportedAt, IncidentStatus status,
                     IncidentSeverity severity, String resolutionNote, String reporterRole) {
-        this.uuid = uuid;
         this.activeTourId = activeTourId;
         this.reportedByUserId = reportedByUserId;
         this.description = description;
@@ -38,11 +53,11 @@ public class Incident extends AbstractDomainAggregateRoot<Incident> {
         this.reporterRole = reporterRole != null ? reporterRole : "TOURIST";
     }
 
-    public static Incident reconstitute(Long id, String uuid, Long activeTourId, Long reportedByUserId,
+    public static Incident reconstitute(Long id, Long activeTourId, Long reportedByUserId,
                                         String description, Double latitude, Double longitude, Date reportedAt,
                                         IncidentStatus status, IncidentSeverity severity, String resolutionNote,
                                         String reporterRole) {
-        var incident = new Incident(uuid, activeTourId, reportedByUserId, description, latitude, longitude,
+        var incident = new Incident(activeTourId, reportedByUserId, description, latitude, longitude,
                 reportedAt, status, severity, resolutionNote, reporterRole);
         incident.id = id;
         return incident;
@@ -50,7 +65,6 @@ public class Incident extends AbstractDomainAggregateRoot<Incident> {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-    public String getUuid() { return uuid; }
     public Long getActiveTourId() { return activeTourId; }
     public Long getReportedByUserId() { return reportedByUserId; }
     public String getDescription() { return description; }
@@ -62,6 +76,19 @@ public class Incident extends AbstractDomainAggregateRoot<Incident> {
     public String getResolutionNote() { return resolutionNote; }
     public String getReporterRole() { return reporterRole; }
 
+    /**
+     * Updates the incident's information with the provided values. If resolutionNote is null, it will not be updated.
+     * @param activeTourId
+     * @param reportedByUserId
+     * @param description
+     * @param latitude
+     * @param longitude
+     * @param reportedAt
+     * @param status
+     * @param severity
+     * @param resolutionNote
+     * @param reporterRole
+     */
     public void updateInformation(Long activeTourId, Long reportedByUserId, String description,
                                  Double latitude, Double longitude, Date reportedAt, IncidentStatus status,
                                  IncidentSeverity severity, String resolutionNote, String reporterRole) {
