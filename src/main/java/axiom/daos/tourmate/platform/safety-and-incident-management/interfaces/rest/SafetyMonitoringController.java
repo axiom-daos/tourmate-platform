@@ -12,10 +12,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/locations")
 @Tag(name = "Safety Monitoring", description = "Safety Monitoring and Locations CRUD Endpoints")
+/**
+ * Controller class for managing safety monitoring locations, providing RESTful endpoints for creating, retrieving, updating, and deleting location records. This controller uses an in-memory storage mechanism to manage location data.
+ */
 public class SafetyMonitoringController {
 
-    // Nota: Para mantener el enfoque estricto en CRUD y la compatibilidad con el mock/store de locations del front,
-    // gestionamos los registros de seguridad asociados o un almacenamiento relacional directo.
     private final Map<Long, Map<String, Object>> storage = new HashMap<>();
     private long sequenceId = 1L;
 
@@ -24,6 +25,11 @@ public class SafetyMonitoringController {
         return ResponseEntity.ok(storage.values().stream().toList());
     }
 
+    /**
+     * Creates a new location record with the provided payload and assigns it a unique ID. The new record is stored in the in-memory storage.
+     * @param payload
+     * @return
+     */
     @PostMapping
     public ResponseEntity<Map<String, Object>> createLocation(@RequestBody Map<String, Object> payload) {
         long id = sequenceId++;
@@ -33,6 +39,11 @@ public class SafetyMonitoringController {
         return ResponseEntity.status(HttpStatus.CREATED).body(record);
     }
 
+    /**
+     *  Retrieves a location by its ID. If the location is not found, returns a 404 Not Found response.
+     * @param id
+     * @return
+     */
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getLocationById(@PathVariable Long id) {
         Map<String, Object> record = storage.get(id);
@@ -41,7 +52,12 @@ public class SafetyMonitoringController {
         }
         return ResponseEntity.ok(record);
     }
-
+/**
+     * Updates an existing location by its ID. If the location does not exist, returns a 404 Not Found response.
+     * @param id The ID of the location to update.
+     * @param payload The updated location data.
+     * @return A ResponseEntity containing the updated location data or a 404 Not Found response if the location does not exist.
+     */
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, Object>> updateLocation(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         if (!storage.containsKey(id)) {
@@ -52,7 +68,11 @@ public class SafetyMonitoringController {
         storage.put(id, record);
         return ResponseEntity.ok(record);
     }
-
+/**
+     * Deletes a location by its ID. If the location does not exist, returns a 404 Not Found response.
+     * @param id The ID of the location to delete.
+     * @return A ResponseEntity indicating the result of the deletion operation.
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteLocation(@PathVariable Long id) {
         if (!storage.containsKey(id)) {
