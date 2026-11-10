@@ -13,6 +13,8 @@ public interface TourRepository {
 
     boolean existsById(Long id);
 
+    boolean existsByTitle(String title);
+
     Tour save(Tour tour);
 
     void deleteById(Long id);
