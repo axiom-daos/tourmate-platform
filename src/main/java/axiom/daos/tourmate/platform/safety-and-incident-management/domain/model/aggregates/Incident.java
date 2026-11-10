@@ -38,7 +38,6 @@ public class Incident extends AbstractDomainAggregateRoot<Incident> {
         this.reporterRole = reporterRole != null ? reporterRole : "TOURIST";
     }
 
-    // Getters y métodos de negocio para actualizar el estado o resolver
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getUuid() { return uuid; }
