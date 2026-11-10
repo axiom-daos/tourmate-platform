@@ -18,7 +18,7 @@ public record CreateActiveTourResource(
         double currentLongitude,
         @Schema(description = "Timestamp when the active tour started", example = "2023-10-01T10:00:00Z")
         String startedAt,
-        @Schema(description = "Timestamp when the active tour finished", example = "2023-10-01T12:00:00Z")
+        @Schema(description = "Timestamp when the active tour finished; may be null or blank while the tour is in progress", example = "2023-10-01T12:00:00Z", nullable = true)
         String finishedAt
 ) {
 
@@ -37,9 +37,6 @@ public record CreateActiveTourResource(
         }
         if(startedAt == null || startedAt.isBlank()){
             throw new IllegalArgumentException("Started at timestamp is required");
-        }
-        if(finishedAt == null || finishedAt.isBlank()){
-            throw new IllegalArgumentException("Finished at timestamp is required");
         }
     }
 }

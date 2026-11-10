@@ -40,8 +40,6 @@ public record UpdateActiveTourResource(
         if(startedAt == null || startedAt.isBlank()){
             throw new IllegalArgumentException("Started at timestamp is required");
         }
-        if(finishedAt == null || finishedAt.isBlank()){
-            throw new IllegalArgumentException("Finished at timestamp is required");
-        }
+
     }
 }

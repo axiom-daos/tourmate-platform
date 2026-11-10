@@ -32,7 +32,7 @@ import java.util.List;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
- * REST controller that exposes activeTour resources and activeTour administration endpoints.
+ * REST controller that exposes active tour resources and active tour administration endpoints.
  */
 @RestController
 @RequestMapping(value = "/api/v1/active-tours", produces = APPLICATION_JSON_VALUE)
@@ -60,7 +60,7 @@ public class ActiveToursController {
      * @return The {@link ActiveTourResource} resource for the created activeTour
      */
     @PostMapping
-    @Operation(summary = "Create a new activeTour", description = "Creates a new activeTour with title and description. Requires instructor or admin role.")
+    @Operation(summary = "Create a new active tour", description = "Creates a new active tour with title and description. Requires instructor or admin role.")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "201",
@@ -87,13 +87,13 @@ public class ActiveToursController {
     }
 
     /**
-     * Get activeTour by id
+     * Get active tour by id
      *
-     * @param activeTourId The activeTour id
-     * @return The {@link ActiveTourResource} resource for the activeTour
+     * @param activeTourId The active tour id
+     * @return The {@link ActiveTourResource} resource for the active tourr
      */
     @GetMapping("/{activeTourId}")
-    @Operation(summary = "Get activeTour by ID", description = "Retrieves a specific activeTour by its unique identifier.")
+    @Operation(summary = "Get active tour by ID", description = "Retrieves a specific active tour by its unique identifier.")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
@@ -104,7 +104,7 @@ public class ActiveToursController {
     })
     public ResponseEntity<ActiveTourResource> getActiveTourById(
             @PathVariable
-            @Parameter(description = "Unique activeTour identifier", example = "1", required = true)
+            @Parameter(description = "Unique active tour identifier", example = "1", required = true)
             Long activeTourId
     ) {
         var getActiveTourByIdQuery = new GetActiveTourByIdQuery(activeTourId);
@@ -116,12 +116,12 @@ public class ActiveToursController {
     }
 
     /**
-     * Get all activeTours
+     * Get all active tours
      *
-     * @return The list of {@link ActiveTourResource} resources for all activeTours
+     * @return The list of {@link ActiveTourResource} resources for all active tours
      */
     @GetMapping
-    @Operation(summary = "Get all activeTours", description = "Retrieves a list of all available activeTours.")
+    @Operation(summary = "Get all active tours", description = "Retrieves a list of all available activ tours.")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
@@ -138,14 +138,14 @@ public class ActiveToursController {
     }
 
     /**
-     * Update activeTour
+     * Update active tour
      *
-     * @param activeTourId The activeTour id
+     * @param activeTourId The active tour id
      * @param resource The {@link UpdateActiveTourResource} instance
-     * @return The {@link ActiveTourResource} resource for the updated activeTour
+     * @return The {@link ActiveTourResource} resource for the updated active tour
      */
     @PutMapping("/{activeTourId}")
-    @Operation(summary = "Update activeTour", description = "Updates an existing activeTour's title and description. Requires instructor or admin role.")
+    @Operation(summary = "Update active tour", description = "Updates an existing active tour's title and description. Requires instructor or admin role.")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
@@ -159,7 +159,7 @@ public class ActiveToursController {
     })
     public ResponseEntity<?> updateActiveTour(
             @PathVariable
-            @Parameter(description = "Unique activeTour identifier", example = "1", required = true)
+            @Parameter(description = "Unique active tour identifier", example = "1", required = true)
             Long activeTourId,
             @RequestBody UpdateActiveTourResource resource
     ) {
@@ -173,25 +173,25 @@ public class ActiveToursController {
     }
 
     /**
-     * Delete activeTour
+     * Delete active tour
      *
-     * @param activeTourId The activeTour id
-     * @return The message for the deleted activeTour
+     * @param activeTourId The active tour id
+     * @return The message for the deleted active tour
      */
     @DeleteMapping("/{activeTourId}")
-    @Operation(summary = "Delete activeTour", description = "Deletes a activeTour. Requires instructor or admin role.")
+    @Operation(summary = "Delete active tour", description = "Deletes a active tour. Requires instructor or admin role.")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "204",
-                    description = "ActiveTour deleted successfully"
+                    description = "Active tour deleted successfully"
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized - JWT token required"),
             @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions"),
-            @ApiResponse(responseCode = "404", description = "ActiveTour not found")
+            @ApiResponse(responseCode = "404", description = "Active Tour not found")
     })
     public ResponseEntity<?> deleteActiveTour(
             @PathVariable
-            @Parameter(description = "Unique activeTour identifier", example = "1", required = true)
+            @Parameter(description = "Unique active tour identifier", example = "1", required = true)
             Long activeTourId
     ) {
         var deleteActiveTourCommand = new DeleteActiveTourCommand(activeTourId);
