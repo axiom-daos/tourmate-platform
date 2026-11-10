@@ -1,11 +1,11 @@
 package axiom.daos.tourmate.platform.safety_and_incident_management.interfaces.rest;
 
-import axiom.daos.tourmate.platform.safety.application.internal.commandservices.IncidentCommandService;
-import axiom.daos.tourmate.platform.safety.application.internal.queryservices.IncidentQueryService;
-import axiom.daos.tourmate.platform.safety.domain.model.valueobjects.IncidentSeverity;
-import axiom.daos.tourmate.platform.safety.domain.model.valueobjects.IncidentStatus;
-import axiom.daos.tourmate.platform.safety.interfaces.rest.resources.IncidentResource;
-import axiom.daos.tourmate.platform.safety.interfaces.rest.transform.IncidentResourceAssembler;
+import axiom.daos.tourmate.platform.safety_and_incident_management.application.internal.commandservices.IncidentCommandService;
+import axiom.daos.tourmate.platform.safety_and_incident_management.application.internal.queryservices.IncidentQueryService;
+import axiom.daos.tourmate.platform.safety_and_incident_management.domain.model.valueobjects.IncidentSeverity;
+import axiom.daos.tourmate.platform.safety_and_incident_management.domain.model.valueobjects.IncidentStatus;
+import axiom.daos.tourmate.platform.safety_and_incident_management.interfaces.rest.resources.IncidentResource;
+import axiom.daos.tourmate.platform.safety_and_incident_management.interfaces.rest.transform.IncidentResourceAssembler;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.http.HttpStatus;

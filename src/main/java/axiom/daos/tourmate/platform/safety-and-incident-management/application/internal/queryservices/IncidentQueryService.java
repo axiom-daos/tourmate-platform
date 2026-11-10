@@ -1,7 +1,7 @@
 package axiom.daos.tourmate.platform.safety_and_incident_management.application.internal.queryservices;
 
-import axiom.daos.tourmate.platform.safety.domain.model.aggregates.Incident;
-import axiom.daos.tourmate.platform.safety.domain.model.repositories.IncidentRepository;
+import axiom.daos.tourmate.platform.safety_and_incident_management.domain.model.aggregates.Incident;
+import axiom.daos.tourmate.platform.safety_and_incident_management.domain.persistence.IncidentRepository;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Service;
 

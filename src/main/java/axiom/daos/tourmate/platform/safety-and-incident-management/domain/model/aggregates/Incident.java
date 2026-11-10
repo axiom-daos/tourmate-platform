@@ -1,8 +1,8 @@
 package axiom.daos.tourmate.platform.safety_and_incident_management.domain.model.aggregates;
 
 import axiom.daos.tourmate.platform.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
-import axiom.daos.tourmate.platform.safety.domain.model.valueobjects.IncidentSeverity;
-import axiom.daos.tourmate.platform.safety.domain.model.valueobjects.IncidentStatus;
+import axiom.daos.tourmate.platform.safety_and_incident_management.domain.model.valueobjects.IncidentSeverity;
+import axiom.daos.tourmate.platform.safety_and_incident_management.domain.model.valueobjects.IncidentStatus;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Date;
@@ -38,6 +38,16 @@ public class Incident extends AbstractDomainAggregateRoot<Incident> {
         this.reporterRole = reporterRole != null ? reporterRole : "TOURIST";
     }
 
+    public static Incident reconstitute(Long id, String uuid, Long activeTourId, Long reportedByUserId,
+                                        String description, Double latitude, Double longitude, Date reportedAt,
+                                        IncidentStatus status, IncidentSeverity severity, String resolutionNote,
+                                        String reporterRole) {
+        var incident = new Incident(uuid, activeTourId, reportedByUserId, description, latitude, longitude,
+                reportedAt, status, severity, resolutionNote, reporterRole);
+        incident.id = id;
+        return incident;
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getUuid() { return uuid; }
@@ -52,15 +62,20 @@ public class Incident extends AbstractDomainAggregateRoot<Incident> {
     public String getResolutionNote() { return resolutionNote; }
     public String getReporterRole() { return reporterRole; }
 
-    public void updateDetails(String description, Double latitude, Double longitude,
-                              IncidentStatus status, IncidentSeverity severity, String resolutionNote) {
+    public void updateInformation(Long activeTourId, Long reportedByUserId, String description,
+                                 Double latitude, Double longitude, Date reportedAt, IncidentStatus status,
+                                 IncidentSeverity severity, String resolutionNote, String reporterRole) {
+        this.activeTourId = activeTourId;
+        this.reportedByUserId = reportedByUserId;
         this.description = description;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.reportedAt = reportedAt;
         this.status = status;
         this.severity = severity;
         if (resolutionNote != null) {
             this.resolutionNote = resolutionNote;
         }
+        this.reporterRole = reporterRole;
     }
 }

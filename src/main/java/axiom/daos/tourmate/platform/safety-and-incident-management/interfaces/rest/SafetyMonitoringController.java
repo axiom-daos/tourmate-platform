@@ -1,7 +1,5 @@
 package axiom.daos.tourmate.platform.safety_and_incident_management.interfaces.rest;
 
-import axiom.daos.tourmate.platform.safety.infrastructure.persistence.entities.IncidentJpaEntity;
-import axiom.daos.tourmate.platform.safety.infrastructure.persistence.repositories.IncidentJpaRepository;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +25,7 @@ public class SafetyMonitoringController {
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>>> createLocation(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<Map<String, Object>> createLocation(@RequestBody Map<String, Object> payload) {
         long id = sequenceId++;
         Map<String, Object> record = new HashMap<>(payload);
         record.put("id", id);
@@ -36,7 +34,7 @@ public class SafetyMonitoringController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>>> getLocationById(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getLocationById(@PathVariable Long id) {
         Map<String, Object> record = storage.get(id);
         if (record == null) {
             return ResponseEntity.notFound().build();
@@ -45,7 +43,7 @@ public class SafetyMonitoringController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>>> updateLocation(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
+    public ResponseEntity<Map<String, Object>> updateLocation(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         if (!storage.containsKey(id)) {
             return ResponseEntity.notFound().build();
         }

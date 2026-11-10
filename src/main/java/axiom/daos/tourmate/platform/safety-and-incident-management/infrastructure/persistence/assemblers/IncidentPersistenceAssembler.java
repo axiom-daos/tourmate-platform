@@ -1,7 +1,7 @@
 package axiom.daos.tourmate.platform.safety_and_incident_management.infrastructure.persistence.assemblers;
 
-import axiom.daos.tourmate.platform.safety.domain.model.aggregates.Incident;
-import axiom.daos.tourmate.platform.safety.infrastructure.persistence.entities.IncidentJpaEntity;
+import axiom.daos.tourmate.platform.safety_and_incident_management.domain.model.aggregates.Incident;
+import axiom.daos.tourmate.platform.safety_and_incident_management.infrastructure.persistence.entities.IncidentJpaEntity;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -21,7 +21,7 @@ public final class IncidentPersistenceAssembler {
      * @return the Incident domain aggregate
      */
     public static Incident toEntityFromJpaEntity(IncidentJpaEntity entity) {
-        return new Incident(
+        return Incident.reconstitute(
                 entity.getId(),
                 entity.getUuid(),
                 entity.getActiveTourId(),
@@ -45,7 +45,9 @@ public final class IncidentPersistenceAssembler {
      */
     public static IncidentJpaEntity toJpaEntityFromEntity(Incident incident) {
         IncidentJpaEntity entity = new IncidentJpaEntity();
-        entity.setId(incident.getId());
+        if (incident.getId() != null) {
+            entity.setId(incident.getId());
+        }
         entity.setUuid(incident.getUuid());
         entity.setActiveTourId(incident.getActiveTourId());
         entity.setReportedByUserId(incident.getReportedByUserId());

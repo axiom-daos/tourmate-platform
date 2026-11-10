@@ -1,7 +1,7 @@
 package axiom.daos.tourmate.platform.safety_and_incident_management.infrastructure.persistence.entities;
 
-import axiom.daos.tourmate.platform.safety.domain.model.valueobjects.IncidentSeverity;
-import axiom.daos.tourmate.platform.safety.domain.model.valueobjects.IncidentStatus;
+import axiom.daos.tourmate.platform.safety_and_incident_management.domain.model.valueobjects.IncidentSeverity;
+import axiom.daos.tourmate.platform.safety_and_incident_management.domain.model.valueobjects.IncidentStatus;
 import axiom.daos.tourmate.platform.shared.infrastructure.persistence.jpa.entities.AuditableAbstractPersistenceEntity;
 import jakarta.persistence.*;
 import lombok.Getter;

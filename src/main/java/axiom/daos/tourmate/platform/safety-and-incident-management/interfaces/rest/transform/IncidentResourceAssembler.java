@@ -1,7 +1,7 @@
 package axiom.daos.tourmate.platform.safety_and_incident_management.interfaces.rest.transform;
 
-import axiom.daos.tourmate.platform.safety.domain.model.aggregates.Incident;
-import axiom.daos.tourmate.platform.safety.interfaces.rest.resources.IncidentResource;
+import axiom.daos.tourmate.platform.safety_and_incident_management.domain.model.aggregates.Incident;
+import axiom.daos.tourmate.platform.safety_and_incident_management.interfaces.rest.resources.IncidentResource;
 import org.jspecify.annotations.NullMarked;
 
 @NullMarked

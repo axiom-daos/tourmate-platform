@@ -1,10 +1,10 @@
 package axiom.daos.tourmate.platform.safety_and_incident_management.infrastructure.persistence.adapters;
 
-import axiom.daos.tourmate.platform.safety.domain.model.aggregates.Incident;
-import axiom.daos.tourmate.platform.safety.domain.model.repositories.IncidentRepository;
-import axiom.daos.tourmate.platform.safety.infrastructure.persistence.entities.IncidentJpaEntity;
-import axiom.daos.tourmate.platform.safety.infrastructure.persistence.repositories.IncidentJpaRepository;
-import axiom.daos.tourmate.platform.safety.infrastructure.persistence.transform.IncidentPersistenceAssembler;
+import axiom.daos.tourmate.platform.safety_and_incident_management.domain.model.aggregates.Incident;
+import axiom.daos.tourmate.platform.safety_and_incident_management.domain.persistence.IncidentRepository;
+import axiom.daos.tourmate.platform.safety_and_incident_management.infrastructure.persistence.assemblers.IncidentPersistenceAssembler;
+import axiom.daos.tourmate.platform.safety_and_incident_management.infrastructure.persistence.entities.IncidentJpaEntity;
+import axiom.daos.tourmate.platform.safety_and_incident_management.infrastructure.persistence.repositories.IncidentJpaRepository;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Repository;
 

@@ -1,9 +1,9 @@
 package axiom.daos.tourmate.platform.safety_and_incident_management.application.internal.commandservices;
 
-import axiom.daos.tourmate.platform.safety.domain.model.aggregates.Incident;
-import axiom.daos.tourmate.platform.safety.domain.model.repositories.IncidentRepository;
-import axiom.daos.tourmate.platform.safety.domain.model.valueobjects.IncidentSeverity;
-import axiom.daos.tourmate.platform.safety.domain.model.valueobjects.IncidentStatus;
+import axiom.daos.tourmate.platform.safety_and_incident_management.domain.model.aggregates.Incident;
+import axiom.daos.tourmate.platform.safety_and_incident_management.domain.persistence.IncidentRepository;
+import axiom.daos.tourmate.platform.safety_and_incident_management.domain.model.valueobjects.IncidentSeverity;
+import axiom.daos.tourmate.platform.safety_and_incident_management.domain.model.valueobjects.IncidentStatus;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
