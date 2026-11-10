@@ -34,18 +34,6 @@ public class PlanPersistenceEntity extends AuditableAbstractPersistenceEntity {
     @Column(nullable = false, length = 3)
     private String currency;
 
-    @Column(name = "billing_cycle_days", nullable = false)
-    private Integer billingCycleDays;
-
-    @Column(name = "max_tours", nullable = false)
-    private Integer maxTours;
-
-    @Column(name = "max_tourists_per_tour", nullable = false)
-    private Integer maxTouristsPerTour;
-
-    @Column(name = "is_custom_branding_allowed", nullable = false)
-    private Boolean isCustomBrandingAllowed;
-
-    @Column(name = "is_priority_support_included", nullable = false)
-    private Boolean isPrioritySupportIncluded;
+    @Column(name = "max_active_tours", nullable = false)
+    private Integer maxActiveTours;
 }

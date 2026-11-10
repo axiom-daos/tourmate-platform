@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.Date;
 
 /**
  * JPA persistence entity for subscription payment transactions.
@@ -26,11 +26,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class PaymentPersistenceEntity extends AuditableAbstractPersistenceEntity {
 
-    @Column(name = "subscription_id", nullable = false)
-    private Long subscriptionId;
-
     @Column(name = "agency_id", nullable = false)
     private Long agencyId;
+
+    @Column(name = "plan_id", nullable = false)
+    private Long planId;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
@@ -42,12 +42,9 @@ public class PaymentPersistenceEntity extends AuditableAbstractPersistenceEntity
     @Column(nullable = false, length = 30)
     private PaymentStatus status;
 
-    @Column(name = "payment_method", nullable = false, length = 50)
-    private String paymentMethod;
+    @Column(name = "requested_at", nullable = false)
+    private Date requestedAt;
 
     @Column(name = "transaction_reference", nullable = false, unique = true, length = 100)
     private String transactionReference;
-
-    @Column(name = "paid_at", nullable = false)
-    private LocalDateTime paidAt;
 }

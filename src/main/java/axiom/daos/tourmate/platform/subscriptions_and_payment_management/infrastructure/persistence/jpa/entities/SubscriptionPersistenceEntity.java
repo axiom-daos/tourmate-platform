@@ -12,8 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.Date;
 
 /**
  * JPA persistence entity for agency subscriptions.
@@ -36,15 +35,9 @@ public class SubscriptionPersistenceEntity extends AuditableAbstractPersistenceE
     @Column(nullable = false, length = 30)
     private SubscriptionStatus status;
 
-    @Column(name = "start_date", nullable = false)
-    private LocalDate startDate;
-
-    @Column(name = "end_date", nullable = false)
-    private LocalDate endDate;
-
-    @Column(name = "cancellation_reason", length = 500)
-    private String cancellationReason;
+    @Column(name = "activated_at")
+    private Date activatedAt;
 
     @Column(name = "cancelled_at")
-    private LocalDateTime cancelledAt;
+    private Date cancelledAt;
 }
