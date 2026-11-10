@@ -23,7 +23,6 @@ public final class IncidentPersistenceAssembler {
     public static Incident toEntityFromJpaEntity(IncidentJpaEntity entity) {
         return Incident.reconstitute(
                 entity.getId(),
-                entity.getUuid(),
                 entity.getActiveTourId(),
                 entity.getReportedByUserId(),
                 entity.getDescription(),
@@ -48,7 +47,6 @@ public final class IncidentPersistenceAssembler {
         if (incident.getId() != null) {
             entity.setId(incident.getId());
         }
-        entity.setUuid(incident.getUuid());
         entity.setActiveTourId(incident.getActiveTourId());
         entity.setReportedByUserId(incident.getReportedByUserId());
         entity.setDescription(incident.getDescription());
