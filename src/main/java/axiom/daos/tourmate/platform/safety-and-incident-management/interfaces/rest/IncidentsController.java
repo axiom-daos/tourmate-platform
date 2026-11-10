@@ -4,7 +4,9 @@ import axiom.daos.tourmate.platform.safety_and_incident_management.application.i
 import axiom.daos.tourmate.platform.safety_and_incident_management.application.internal.queryservices.IncidentQueryService;
 import axiom.daos.tourmate.platform.safety_and_incident_management.domain.model.valueobjects.IncidentSeverity;
 import axiom.daos.tourmate.platform.safety_and_incident_management.domain.model.valueobjects.IncidentStatus;
+import axiom.daos.tourmate.platform.safety_and_incident_management.interfaces.rest.resources.CreateIncidentResource;
 import axiom.daos.tourmate.platform.safety_and_incident_management.interfaces.rest.resources.IncidentResource;
+import axiom.daos.tourmate.platform.safety_and_incident_management.interfaces.rest.resources.UpdateIncidentResource;
 import axiom.daos.tourmate.platform.safety_and_incident_management.interfaces.rest.transform.IncidentResourceAssembler;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.jspecify.annotations.NullMarked;
@@ -19,6 +21,9 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/incidents")
 @Tag(name = "Incidents", description = "Available Incident Management CRUD Endpoints")
+/**
+ * Controller class for managing incidents, providing RESTful endpoints for creating, retrieving, updating, and deleting incidents.
+ */
 public class IncidentsController {
 
     private final IncidentCommandService incidentCommandService;
@@ -30,6 +35,9 @@ public class IncidentsController {
     }
 
     @GetMapping
+    /**
+     * Retrieves all incidents and returns them as a list of IncidentResource representations.
+     */
     public ResponseEntity<List<IncidentResource>> getAllIncidents() {
         var incidents = incidentQueryService.getAllIncidents();
         var resources = incidents.stream()
@@ -39,6 +47,9 @@ public class IncidentsController {
     }
 
     @GetMapping("/{id}")
+    /**
+     * Retrieves an incident by its ID and returns it as an IncidentResource. If the incident is not found, returns a 404 Not Found response.
+     */
     public ResponseEntity<IncidentResource> getIncidentById(@PathVariable Long id) {
         return incidentQueryService.getIncidentById(id)
                 .map(IncidentResourceAssembler::toResourceFromEntity)
@@ -47,9 +58,13 @@ public class IncidentsController {
     }
 
     @PostMapping
-    public ResponseEntity<IncidentResource> createIncident(@RequestBody IncidentResource resource) {
+    /**
+     * Creates a new incident based on the provided CreateIncidentResource payload.
+     * @param resource
+     * @return
+     */
+    public ResponseEntity<IncidentResource> createIncident(@RequestBody CreateIncidentResource resource) {
         var createdIncident = incidentCommandService.createIncident(
-                resource.uuid(),
                 resource.activeTourId(),
                 resource.reportedByUserId(),
                 resource.description(),
@@ -66,7 +81,13 @@ public class IncidentsController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<IncidentResource> updateIncident(@PathVariable Long id, @RequestBody IncidentResource resource) {
+    /**
+     * Updates an existing incident.
+     * @param id
+     * @param resource
+     * @return
+     */
+    public ResponseEntity<IncidentResource> updateIncident(@PathVariable Long id, @RequestBody UpdateIncidentResource resource) {
         var updatedIncidentOpt = incidentCommandService.updateIncident(
                 id,
                 resource.activeTourId(),
@@ -88,6 +109,11 @@ public class IncidentsController {
     }
 
     @DeleteMapping("/{id}")
+/**
+     * Deletes an existing incident by its ID.
+     * @param id
+     * @return
+     */
     public ResponseEntity<Void> deleteIncident(@PathVariable Long id) {
         boolean deleted = incidentCommandService.deleteIncident(id);
         if (!deleted) {
