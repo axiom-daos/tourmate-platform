@@ -7,10 +7,12 @@ import java.util.List;
 import java.util.Optional;
 
 @NullMarked
+/**
+ * Repository interface for managing Incident entities, providing methods for CRUD operations and existence checks.
+ */
 public interface IncidentRepository {
     List<Incident> findAll();
     Optional<Incident> findById(Long id);
-    Optional<Incident> findByUuid(String uuid);
     Incident save(Incident incident);
     void deleteById(Long id);
     boolean existsById(Long id);
