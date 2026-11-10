@@ -1,6 +1,7 @@
 package axiom.daos.tourmate.platform.tourmonitoring.domain.model.aggregates;
 
 import axiom.daos.tourmate.platform.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
+import axiom.daos.tourmate.platform.tourmonitoring.domain.model.commands.CreateActiveTourCommand;
 import axiom.daos.tourmate.platform.tourmonitoring.domain.model.valueobjects.Status;
 import axiom.daos.tourmate.platform.tourmonitoring.domain.model.valueobjects.TourGuideId;
 import axiom.daos.tourmate.platform.tourmonitoring.domain.model.valueobjects.TourScheduleId;
@@ -54,6 +55,54 @@ public class ActiveTour extends AbstractDomainAggregateRoot<ActiveTour> {
         activeTour.startedAt = startedAt;
         activeTour.finishedAt = finishedAt;
         return activeTour;
+    }
+    public ActiveTour(
+            Long tourScheduleId,
+            Long tourGuideId,
+            double currentLatitude,
+            double currentLongitude,
+            String startedAt,
+            String finishedAt) {
+        this();
+        this.tourScheduleId = new TourScheduleId(tourScheduleId);
+        this.tourGuideId = new TourGuideId(tourGuideId);
+        this.status = Status.IN_PROGRESS;
+        this.currentLatitude = currentLatitude;
+        this.currentLongitude = currentLongitude;
+        this.startedAt = startedAt != null ? startedAt : Strings.EMPTY;
+        this.finishedAt = finishedAt != null ? finishedAt : Strings.EMPTY;
+    }
+
+    /**
+     * Constructor with a CreateActiveTourCommand.
+     * @param command The {@link CreateActiveTourCommand} instance
+     */
+    public ActiveTour(CreateActiveTourCommand command){
+        this(
+                command.tourScheduleId(),
+                command.tourGuideId(),
+                command.currentLatitude(),
+                command.currentLongitude(),
+                command.startedAt(),
+                command.finishedAt());
+    }
+
+    public ActiveTour updateInformation(
+            Long tourScheduleId,
+            Long tourGuideId,
+            double currentLatitude,
+            double currentLongitude,
+            String startedAt,
+            String finishedAt,
+            String status) {
+        this.tourScheduleId = new TourScheduleId(tourScheduleId);
+        this.tourGuideId = new TourGuideId(tourGuideId);
+        this.currentLatitude = currentLatitude;
+        this.currentLongitude = currentLongitude;
+        this.startedAt = startedAt != null ? startedAt : Strings.EMPTY;
+        this.finishedAt = finishedAt != null ? finishedAt : Strings.EMPTY;
+        this.status = Status.fromValue(status);
+        return this;
     }
 
 }
