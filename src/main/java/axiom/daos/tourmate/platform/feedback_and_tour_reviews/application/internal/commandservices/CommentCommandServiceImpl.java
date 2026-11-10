@@ -2,280 +2,270 @@
 package axiom.daos.tourmate.platform.feedback_and_tour_reviews.application.internal.commandservices;
 
 import axiom.daos.tourmate.platform.feedback_and_tour_reviews.application.commandservices.CommentCommandService;
-import axiom.daos.tourmate.platform.feedback_and_tour_reviews.application.internal.authorization.ReviewOwnershipAuthorizer;
-
 import axiom.daos.tourmate.platform.feedback_and_tour_reviews.domain.model.aggregates.Review;
 import axiom.daos.tourmate.platform.feedback_and_tour_reviews.domain.model.entities.Comment;
-
 import axiom.daos.tourmate.platform.feedback_and_tour_reviews.domain.model.commands.CreateCommentCommand;
 import axiom.daos.tourmate.platform.feedback_and_tour_reviews.domain.model.commands.UpdateCommentCommand;
 import axiom.daos.tourmate.platform.feedback_and_tour_reviews.domain.model.commands.DeleteCommentCommand;
-
 import axiom.daos.tourmate.platform.feedback_and_tour_reviews.domain.repositories.CommentRepository;
 import axiom.daos.tourmate.platform.feedback_and_tour_reviews.domain.repositories.ReviewRepository;
-
 import axiom.daos.tourmate.platform.shared.application.result.ApplicationError;
 import axiom.daos.tourmate.platform.shared.application.result.Result;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Locale;
 import java.util.Optional;
 
 /**
- * Implementación del servicio de comandos de comentarios.
- *
- * Gestiona la creación, actualización y eliminación
- * de comentarios asociados a reseñas turísticas.
- *
- * Reglas principales:
- * - La reseña debe existir.
- * - Solo su propietario puede gestionar el comentario.
- * - Cada reseña puede tener como máximo un comentario.
- *
- * Bounded Context: Feedback and Tour Reviews.
+ * Servicio de comandos para gestionar comentarios.
  */
 @Service
-@Transactional
 public class CommentCommandServiceImpl implements CommentCommandService {
 
-    // Repositorio de comentarios.
-    private final CommentRepository commentRepository;
+    private static final String UNIQUE_COMMENT_CONSTRAINT =
+            "uk_comments_review_id";
 
-    // Repositorio de reseñas.
+    private final CommentRepository commentRepository;
     private final ReviewRepository reviewRepository;
 
-    // Servicio para comprobar la identidad del propietario.
-    private final ReviewOwnershipAuthorizer ownershipAuthorizer;
-
-    /**
-     * Constructor con inyección de dependencias.
-     */
     public CommentCommandServiceImpl(
             CommentRepository commentRepository,
-            ReviewRepository reviewRepository,
-            ReviewOwnershipAuthorizer ownershipAuthorizer
+            ReviewRepository reviewRepository
     ) {
         this.commentRepository = commentRepository;
         this.reviewRepository = reviewRepository;
-        this.ownershipAuthorizer = ownershipAuthorizer;
     }
 
     /**
-     * Crea un comentario asociado a una reseña.
-     *
-     * Primero comprueba que la reseña exista,
-     * que el usuario sea su propietario y que
-     * todavía no tenga un comentario registrado.
-     *
-     * @param command Datos del comentario.
-     * @return Comentario creado o error de aplicación.
+     * Crea un comentario asociado a una reseña existente.
      */
     @Override
     public Result<Comment, ApplicationError> handle(
             CreateCommentCommand command
     ) {
 
-        // Buscamos la reseña a la que pertenece el comentario.
-        Optional<Review> reviewOptional =
-                reviewRepository.findById(
-                        command.reviewId()
+        try {
+            Optional<Review> reviewOptional =
+                    reviewRepository.findById(command.reviewId());
+
+            if (reviewOptional.isEmpty()) {
+                return Result.failure(
+                        ApplicationError.notFound(
+                                "Review",
+                                command.reviewId().toString()
+                        )
                 );
+            }
 
-        // No permitimos comentar reseñas inexistentes.
-        if (reviewOptional.isEmpty()) {
-            return Result.failure(
-                    ApplicationError.notFound(
-                            "Review",
-                            command.reviewId().toString()
-                    )
+            // Una reseña puede tener como máximo un comentario.
+            boolean alreadyHasComment =
+                    !commentRepository.findByReviewId(
+                            command.reviewId()
+                    ).isEmpty();
+
+            if (alreadyHasComment) {
+                return Result.failure(
+                        ApplicationError.conflict(
+                                "Comment",
+                                "Esta reseña ya tiene un comentario."
+                        )
+                );
+            }
+
+            Comment comment = new Comment(
+                    command.reviewId(),
+                    command.content()
             );
-        }
 
-        // Recuperamos la reseña original.
-        Review review = reviewOptional.get();
+            Comment savedComment = commentRepository.save(comment);
 
-        // Verificamos que el usuario autenticado
-        // sea el propietario de la reseña.
-        ownershipAuthorizer.requireOwner(
-                review.getUserId()
-        );
+            return Result.success(savedComment);
 
-        // REGLA DE NEGOCIO:
-        // Cada reseña puede tener como máximo un comentario.
-        boolean alreadyHasComment =
-                !commentRepository.findByReviewId(
-                        command.reviewId()
-                ).isEmpty();
+        } catch (IllegalArgumentException exception) {
 
-        // Si ya existe un comentario, rechazamos
-        // la creación para evitar duplicados.
-        if (alreadyHasComment) {
             return Result.failure(
-                    ApplicationError.conflict(
+                    ApplicationError.validationError(
                             "Comment",
-                            "Esta reseña ya tiene un comentario registrado."
+                            exception.getMessage()
+                    )
+            );
+
+        } catch (DataIntegrityViolationException exception) {
+
+            // La restricción UNIQUE también evita duplicados.
+            if (hasConstraint(exception, UNIQUE_COMMENT_CONSTRAINT)) {
+                return Result.failure(
+                        ApplicationError.conflict(
+                                "Comment",
+                                "Esta reseña ya tiene un comentario."
+                        )
+                );
+            }
+
+            return Result.failure(
+                    ApplicationError.unexpected(
+                            "create-comment",
+                            "No se pudo guardar el comentario."
+                    )
+            );
+
+        } catch (RuntimeException exception) {
+
+            return Result.failure(
+                    ApplicationError.unexpected(
+                            "create-comment",
+                            "Ocurrió un error al crear el comentario."
                     )
             );
         }
-
-        // Creamos el comentario.
-        // Su constructor valida el contenido.
-        Comment comment = new Comment(
-                command.reviewId(),
-                command.content()
-        );
-
-        // Guardamos el nuevo comentario.
-        Comment savedComment =
-                commentRepository.save(comment);
-
-        // Devolvemos el comentario registrado.
-        return Result.success(savedComment);
     }
 
     /**
-     * Actualiza un comentario existente.
-     *
-     * Comprueba que el comentario exista,
-     * pertenezca a la reseña indicada
-     * y que el usuario sea su propietario.
-     *
-     * @param command Datos de actualización.
-     * @return Comentario actualizado o error.
+     * Actualiza solamente el contenido del comentario.
      */
     @Override
     public Result<Comment, ApplicationError> handle(
             UpdateCommentCommand command
     ) {
 
-        // Buscamos el comentario que se desea editar.
-        Optional<Comment> commentOptional =
-                commentRepository.findById(
-                        command.commentId()
-                );
+        try {
+            Optional<Comment> commentOptional =
+                    commentRepository.findById(command.commentId());
 
-        // Verificamos que el comentario exista.
-        if (commentOptional.isEmpty()) {
+            if (commentOptional.isEmpty()) {
+                return Result.failure(
+                        ApplicationError.notFound(
+                                "Comment",
+                                command.commentId().toString()
+                        )
+                );
+            }
+
+            Comment comment = commentOptional.get();
+
+            // El comentario debe mantener su reviewId original.
+            if (!comment.getReviewId().equals(command.reviewId())) {
+                return Result.failure(
+                        ApplicationError.businessRuleViolation(
+                                "Comment review",
+                                "No se puede cambiar la reseña del comentario."
+                        )
+                );
+            }
+
+            boolean reviewExists =
+                    reviewRepository.existsById(comment.getReviewId());
+
+            if (!reviewExists) {
+                return Result.failure(
+                        ApplicationError.notFound(
+                                "Review",
+                                comment.getReviewId().toString()
+                        )
+                );
+            }
+
+            comment.updateContent(command.content());
+
+            Comment updatedComment =
+                    commentRepository.save(comment);
+
+            return Result.success(updatedComment);
+
+        } catch (IllegalArgumentException exception) {
+
             return Result.failure(
-                    ApplicationError.notFound(
+                    ApplicationError.validationError(
                             "Comment",
-                            command.commentId().toString()
+                            exception.getMessage()
                     )
             );
-        }
 
-        // Recuperamos el comentario.
-        Comment comment = commentOptional.get();
-
-        // El comentario debe conservar
-        // su relación original con la reseña.
-        if (!comment.getReviewId().equals(
-                command.reviewId()
-        )) {
+        } catch (RuntimeException exception) {
 
             return Result.failure(
-                    ApplicationError.businessRuleViolation(
-                            "Comment review",
-                            "El comentario no pertenece "
-                                    + "a la reseña indicada."
+                    ApplicationError.unexpected(
+                            "update-comment",
+                            "No se pudo actualizar el comentario."
                     )
             );
         }
-
-        // Buscamos la reseña relacionada.
-        Optional<Review> reviewOptional =
-                reviewRepository.findById(
-                        comment.getReviewId()
-                );
-
-        // Verificamos que la reseña exista.
-        if (reviewOptional.isEmpty()) {
-            return Result.failure(
-                    ApplicationError.notFound(
-                            "Review",
-                            comment.getReviewId().toString()
-                    )
-            );
-        }
-
-        // Solo el propietario puede editar.
-        ownershipAuthorizer.requireOwner(
-                reviewOptional.get().getUserId()
-        );
-
-        // Actualizamos únicamente el contenido.
-        // Conservamos el ID y el reviewId originales.
-        comment.updateContent(
-                command.content()
-        );
-
-        // Guardamos los cambios.
-        Comment updatedComment =
-                commentRepository.save(comment);
-
-        return Result.success(updatedComment);
     }
 
     /**
      * Elimina un comentario existente.
-     *
-     * Comprueba que el comentario y su reseña
-     * existan, y que el usuario tenga autorización.
-     *
-     * @param command Identificador del comentario.
-     * @return true si se eliminó o error.
      */
     @Override
     public Result<Boolean, ApplicationError> handle(
             DeleteCommentCommand command
     ) {
 
-        // Buscamos el comentario solicitado.
-        Optional<Comment> commentOptional =
-                commentRepository.findById(
-                        command.commentId()
-                );
+        try {
+            Optional<Comment> commentOptional =
+                    commentRepository.findById(command.commentId());
 
-        // Comprobamos que exista.
-        if (commentOptional.isEmpty()) {
+            if (commentOptional.isEmpty()) {
+                return Result.failure(
+                        ApplicationError.notFound(
+                                "Comment",
+                                command.commentId().toString()
+                        )
+                );
+            }
+
+            Comment comment = commentOptional.get();
+
+            boolean reviewExists =
+                    reviewRepository.existsById(comment.getReviewId());
+
+            if (!reviewExists) {
+                return Result.failure(
+                        ApplicationError.notFound(
+                                "Review",
+                                comment.getReviewId().toString()
+                        )
+                );
+            }
+
+            commentRepository.deleteById(command.commentId());
+
+            return Result.success(true);
+
+        } catch (RuntimeException exception) {
+
             return Result.failure(
-                    ApplicationError.notFound(
-                            "Comment",
-                            command.commentId().toString()
+                    ApplicationError.unexpected(
+                            "delete-comment",
+                            "No se pudo eliminar el comentario."
                     )
             );
         }
+    }
 
-        // Recuperamos el comentario original.
-        Comment comment = commentOptional.get();
+    /**
+     * Identifica una restricción específica de PostgreSQL.
+     */
+    private boolean hasConstraint(
+            Throwable exception,
+            String constraintName
+    ) {
 
-        // Buscamos la reseña relacionada.
-        Optional<Review> reviewOptional =
-                reviewRepository.findById(
-                        comment.getReviewId()
-                );
+        Throwable current = exception;
 
-        // Rechazamos la operación si la reseña no existe.
-        if (reviewOptional.isEmpty()) {
-            return Result.failure(
-                    ApplicationError.notFound(
-                            "Review",
-                            comment.getReviewId().toString()
-                    )
-            );
+        while (current != null) {
+            String message = current.getMessage();
+
+            if (message != null &&
+                    message.toLowerCase(Locale.ROOT)
+                            .contains(constraintName)) {
+                return true;
+            }
+
+            current = current.getCause();
         }
 
-        // Comprobamos la identidad del propietario.
-        ownershipAuthorizer.requireOwner(
-                reviewOptional.get().getUserId()
-        );
-
-        // Eliminamos el comentario.
-        commentRepository.deleteById(
-                command.commentId()
-        );
-
-        return Result.success(true);
+        return false;
     }
 }

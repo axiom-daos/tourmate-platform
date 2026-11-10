@@ -8,20 +8,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Entidad de persistencia JPA para las reseñas.
- *
- * Representa la estructura de la tabla reviews
- * dentro de la base de datos PostgreSQL.
- *
- * Se mantiene separada del agregado Review
- * para respetar la arquitectura DDD.
- *
- * Bounded Context: Feedback and Tour Reviews.
+ * Entidad JPA para almacenar reseñas en PostgreSQL.
  */
 @Entity
 @Table(
@@ -34,41 +27,28 @@ import lombok.Setter;
         }
 )
 @Getter
-@Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ReviewPersistenceEntity
         extends AuditableAbstractPersistenceEntity {
 
-    /**
-     * Identificador del usuario que creó la reseña.
-     *
-     * Se almacena como Long para mantener
-     * compatibilidad con el Bounded Context IAM.
-     */
+    // Usuario que registró la reseña.
     @Column(
             name = "user_id",
-            nullable = false
+            nullable = false,
+            updatable = false
     )
     private Long userId;
 
-    /**
-     * Identificador del tour que se está calificando.
-     *
-     * Se almacena como Long para mantener
-     * compatibilidad con Tour Management.
-     */
+    // Tour que recibió la calificación.
     @Column(
             name = "tour_id",
-            nullable = false
+            nullable = false,
+            updatable = false
     )
     private Long tourId;
 
-    /**
-     * Calificación asignada al tour.
-     *
-     * El dominio valida que el valor
-     * esté comprendido entre 1 y 5.
-     */
+    // Calificación de 0 a 5 estrellas.
+    @Setter
     @Column(
             name = "rating",
             nullable = false
@@ -76,15 +56,7 @@ public class ReviewPersistenceEntity
     private Integer rating;
 
     /**
-     * Constructor para crear una entidad
-     * de persistencia a partir de sus datos.
-     *
-     * El identificador y las fechas de auditoría
-     * son administrados por la clase base.
-     *
-     * @param userId Identificador del usuario.
-     * @param tourId Identificador del tour.
-     * @param rating Calificación de la reseña.
+     * Constructor para registrar una nueva reseña.
      */
     public ReviewPersistenceEntity(
             Long userId,

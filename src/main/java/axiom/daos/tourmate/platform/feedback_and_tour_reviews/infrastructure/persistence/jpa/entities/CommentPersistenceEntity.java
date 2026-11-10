@@ -18,16 +18,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Entidad de persistencia JPA para los comentarios.
- *
- * Representa la tabla comments de PostgreSQL.
- *
- * Reglas:
- * - Cada comentario pertenece a una reseña existente.
- * - Cada reseña puede tener como máximo un comentario.
- * - La relación se protege mediante una clave foránea.
- *
- * Bounded Context: Feedback and Tour Reviews.
+ * Entidad JPA para almacenar comentarios en PostgreSQL.
  */
 @Entity
 @Table(
@@ -40,45 +31,20 @@ import lombok.Setter;
         }
 )
 @Getter
-@Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CommentPersistenceEntity
         extends AuditableAbstractPersistenceEntity {
 
-    /**
-     * Identificador de la reseña relacionada.
-     *
-     * Conservamos este campo de tipo Long
-     * para mantener la compatibilidad con
-     * nuestros repositorios y assemblers.
-     *
-     * UNIQUE impide múltiples comentarios
-     * para una misma reseña.
-     */
+    // Identificador de la reseña relacionada.
     @Column(
             name = "review_id",
-            nullable = false
+            nullable = false,
+            updatable = false
     )
     private Long reviewId;
 
-    /**
-     * Relación JPA con la reseña existente.
-     *
-     * Se utiliza para declarar la clave foránea
-     * entre comments.review_id y reviews.id.
-     *
-     * La relación es de solo lectura porque
-     * reviewId administra la columna.
-     *
-     * No utilizamos cascadas: la eliminación
-     * de comentarios ya se gestiona desde
-     * ReviewCommandServiceImpl.
-     *
-     * La restricción UNIQUE garantiza que
-     * una reseña tenga como máximo un comentario.
-     */
+    // Relación JPA de solo lectura con la reseña.
     @Getter(AccessLevel.NONE)
-    @Setter(AccessLevel.NONE)
     @ManyToOne(
             fetch = FetchType.LAZY,
             optional = false
@@ -95,12 +61,8 @@ public class CommentPersistenceEntity
     )
     private ReviewPersistenceEntity review;
 
-    /**
-     * Contenido escrito por el usuario.
-     *
-     * Utilizamos TEXT para almacenar
-     * comentarios de longitud variable.
-     */
+    // Texto escrito por el usuario.
+    @Setter
     @Column(
             name = "content",
             nullable = false,
@@ -109,13 +71,7 @@ public class CommentPersistenceEntity
     private String content;
 
     /**
-     * Constructor para registrar un comentario.
-     *
-     * La base de datos generará el identificador
-     * y las fechas de auditoría.
-     *
-     * @param reviewId Identificador de la reseña.
-     * @param content Texto del comentario.
+     * Constructor para registrar un nuevo comentario.
      */
     public CommentPersistenceEntity(
             Long reviewId,

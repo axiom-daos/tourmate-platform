@@ -7,42 +7,30 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * Entidad de dominio que representa
- * un comentario asociado a una reseña turística.
- *
- * Bounded Context: Feedback and Tour Reviews.
+ * Representa un comentario asociado a una reseña.
  */
 @Getter
 public class Comment {
 
-    // Identificador único del comentario.
     private Long id;
 
-    // Identificador de la reseña relacionada.
-    private Long reviewId;
+    // La reseña relacionada no puede modificarse.
+    private final Long reviewId;
 
-    // Contenido escrito por el usuario.
     private String content;
-
-    // Fecha y hora de creación del comentario.
     private Instant createdAt;
 
     /**
-     * Constructor para crear un comentario nuevo.
-     *
-     * El ID será generado por la base de datos
-     * cuando se guarde el comentario.
-     *
-     * @param reviewId Identificador de la reseña.
-     * @param content Contenido del comentario.
+     * Crea un comentario nuevo.
      */
-    public Comment(Long reviewId, String content) {
+    public Comment(
+            Long reviewId,
+            String content
+    ) {
 
-        // Validamos los datos recibidos.
         validateReviewId(reviewId);
         validateContent(content);
 
-        // Inicializamos las propiedades.
         this.id = null;
         this.reviewId = reviewId;
         this.content = content.trim();
@@ -50,11 +38,7 @@ public class Comment {
     }
 
     /**
-     * Reconstruye un comentario existente
-     * utilizando los datos almacenados.
-     *
-     * Será utilizado por los adaptadores
-     * de la capa infrastructure.
+     * Recupera un comentario almacenado en PostgreSQL.
      */
     public static Comment reconstitute(
             Long id,
@@ -63,19 +47,18 @@ public class Comment {
             Instant createdAt
     ) {
 
-        // Comprobamos el identificador del comentario.
         validateId(id);
 
-        // La fecha no debe ser nula.
         Objects.requireNonNull(
                 createdAt,
                 "La fecha de creación es obligatoria."
         );
 
-        // Creamos el comentario validando sus datos.
-        Comment comment = new Comment(reviewId, content);
+        Comment comment = new Comment(
+                reviewId,
+                content
+        );
 
-        // Recuperamos los valores de persistencia.
         comment.id = id;
         comment.createdAt = createdAt;
 
@@ -83,8 +66,17 @@ public class Comment {
     }
 
     /**
-     * Valida el identificador de un comentario.
+     * Actualiza únicamente el texto del comentario.
      */
+    public Comment updateContent(String content) {
+
+        validateContent(content);
+
+        this.content = content.trim();
+
+        return this;
+    }
+
     private static void validateId(Long id) {
 
         if (id == null || id <= 0) {
@@ -94,10 +86,6 @@ public class Comment {
         }
     }
 
-    /**
-     * Comprueba que el comentario pertenezca
-     * a una reseña con identificador válido.
-     */
     private static void validateReviewId(Long reviewId) {
 
         if (reviewId == null || reviewId <= 0) {
@@ -107,12 +95,6 @@ public class Comment {
         }
     }
 
-    /**
-     * Valida el contenido del comentario.
-     *
-     * Debe contener al menos cinco caracteres
-     * sin contar los espacios de los extremos.
-     */
     private static void validateContent(String content) {
 
         if (content == null || content.trim().length() < 5) {
@@ -120,22 +102,5 @@ public class Comment {
                     "El comentario debe tener al menos 5 caracteres."
             );
         }
-    }
-
-    /**
-     * Actualiza el contenido de un comentario.
-     *
-     * Conserva el ID, la reseña relacionada
-     * y la fecha original de creación.
-     */
-    public Comment updateContent(String content) {
-
-        // Comprobamos las reglas antes de actualizar.
-        validateContent(content);
-
-        // Guardamos el contenido sin espacios innecesarios.
-        this.content = content.trim();
-
-        return this;
     }
 }
