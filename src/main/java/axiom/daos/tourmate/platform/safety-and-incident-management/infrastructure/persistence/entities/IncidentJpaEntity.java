@@ -15,10 +15,10 @@ import java.util.Date;
 @NoArgsConstructor
 @Entity
 @Table(name = "incidents")
+/**
+ * Represents the JPA entity for an incident reported during a tour, mapping to the "incidents" table in the database. It includes fields for tour ID, reporter ID, description, location, status, severity, and resolution information.
+ */
 public class IncidentJpaEntity extends AuditableAbstractPersistenceEntity {
-
-    @Column(nullable = false, unique = true)
-    private String uuid;
 
     @Column(name = "active_tour_id", nullable = false)
     private Long activeTourId;
