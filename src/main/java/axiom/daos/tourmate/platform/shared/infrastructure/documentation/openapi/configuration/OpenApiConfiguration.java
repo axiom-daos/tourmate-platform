@@ -67,7 +67,7 @@ public class OpenApiConfiguration {
                         .url("https://staging-api.tour-mate.com")
                         .description("Staging Environment"),
                 new Server()
-                        .url("https://api.tour-mate.com")
+                        .url("https://tourmate-platform.onrender.com")
                         .description("Production Environment")
         ));
 
