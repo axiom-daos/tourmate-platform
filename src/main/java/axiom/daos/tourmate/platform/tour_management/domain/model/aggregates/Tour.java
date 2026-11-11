@@ -53,12 +53,14 @@ public class Tour extends AbstractDomainAggregateRoot<Tour> {
         this.status = TourStatus.UNAVAILABLE;
     }
 
-    public void changeDetails(TourDetails newDetails) {
+    public Tour changeDetails(TourDetails newDetails) {
         if(newDetails == null) {
             throw new IllegalArgumentException("New details cannot be null");
         }
 
         this.tourDetails = newDetails;
+
+        return this;
     }
 
     public void addCheckpoint(Checkpoint newCheckpoint) {
