@@ -35,7 +35,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * REST controller that exposes active tour resources and active tour administration endpoints.
  */
 @RestController
-@RequestMapping(value = "/api/v1/active-tours", produces = APPLICATION_JSON_VALUE)
+@RequestMapping(value = {"/api/v1/active-tours", "/api/v1/active_tours"}, produces = APPLICATION_JSON_VALUE)
 @Tag(name = "ActiveTours", description = "ActiveTour management endpoints")
 public class ActiveToursController {
     private final ActiveTourCommandService activeTourCommandService;

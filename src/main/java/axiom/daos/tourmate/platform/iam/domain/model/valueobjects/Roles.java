@@ -10,4 +10,5 @@ public enum Roles {
     ROLE_USER,
     ROLE_ADMIN,
     ROLE_TOUR_GUIDE,
+    ROLE_AGENCY_OWNER
 }
