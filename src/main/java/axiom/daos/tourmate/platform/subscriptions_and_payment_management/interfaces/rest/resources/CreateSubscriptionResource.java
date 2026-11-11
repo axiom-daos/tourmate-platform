@@ -1,10 +1,12 @@
 package axiom.daos.tourmate.platform.subscriptions_and_payment_management.interfaces.rest.resources;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * REST request resource to subscribe an agency to a plan.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(name = "CreateSubscriptionRequest", description = "Payload to subscribe an agency to a plan")
 public record CreateSubscriptionResource(
         @Schema(description = "Agency identifier", example = "42", requiredMode = Schema.RequiredMode.REQUIRED)

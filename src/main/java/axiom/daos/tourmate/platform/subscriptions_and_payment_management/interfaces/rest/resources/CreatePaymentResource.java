@@ -1,5 +1,6 @@
 package axiom.daos.tourmate.platform.subscriptions_and_payment_management.interfaces.rest.resources;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
@@ -7,6 +8,7 @@ import java.math.BigDecimal;
 /**
  * REST request resource to record a payment transaction.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(name = "CreatePaymentRequest", description = "Payload to record a subscription payment")
 public record CreatePaymentResource(
         @Schema(description = "Agency identifier", example = "42", requiredMode = Schema.RequiredMode.REQUIRED)
