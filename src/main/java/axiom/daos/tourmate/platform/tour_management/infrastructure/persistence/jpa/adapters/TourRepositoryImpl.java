@@ -34,6 +34,11 @@ public class TourRepositoryImpl implements TourRepository {
     }
 
     @Override
+    public boolean existsByTitle(String title) {
+        return this.tourPersistenceRepository.existsByTourDetailsTitle(title);
+    }
+
+    @Override
     public Tour save(Tour tour) {
         var saved = this.tourPersistenceRepository.save(TourPersistenceAssembler.toPersistenceFromDomain(tour));
         return TourPersistenceAssembler.toDomainFromPersistence(saved);
