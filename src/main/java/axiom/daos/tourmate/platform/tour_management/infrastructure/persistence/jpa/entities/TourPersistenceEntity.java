@@ -22,7 +22,7 @@ public class TourPersistenceEntity extends AuditableAbstractPersistenceEntity {
 
     @Convert(converter = AgencyIdPersistenceConverter.class)
     @Column(name = "agency_id", nullable = false)
-    private Long agencyId;
+    private AgencyId agencyId;
 
     @Embedded
     private TourDetailsPersistenceEmbeddable tourDetails;
