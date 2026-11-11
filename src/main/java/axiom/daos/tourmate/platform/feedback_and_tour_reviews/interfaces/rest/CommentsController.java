@@ -43,7 +43,7 @@ import java.util.function.Supplier;
 )
 @Tag(
         name = "Comments",
-        description = "Gestión de comentarios de reseñas"
+        description = "Tour review comment management endpoints"
 )
 public class CommentsController {
 
@@ -62,7 +62,7 @@ public class CommentsController {
      * Obtiene todos los comentarios o filtra por reseña.
      */
     @GetMapping
-    @Operation(summary = "Consultar comentarios")
+    @Operation(summary = "Get all comments")
     public ResponseEntity<?> getComments(
             @RequestParam(required = false) Long reviewId
     ) {
@@ -87,7 +87,7 @@ public class CommentsController {
      * Busca un comentario por su identificador.
      */
     @GetMapping("/{commentId}")
-    @Operation(summary = "Consultar comentario por ID")
+    @Operation(summary = "Get comment by ID")
     public ResponseEntity<?> getCommentById(
             @PathVariable Long commentId
     ) {
@@ -112,7 +112,7 @@ public class CommentsController {
      * Crea un comentario para una reseña.
      */
     @PostMapping
-    @Operation(summary = "Crear un comentario")
+    @Operation(summary = "Create a new comment")
     public ResponseEntity<?> createComment(
             @RequestBody CreateCommentResource resource
     ) {
@@ -139,7 +139,7 @@ public class CommentsController {
      * Actualiza solamente el contenido del comentario.
      */
     @PutMapping("/{commentId}")
-    @Operation(summary = "Actualizar un comentario")
+    @Operation(summary = "Update a comment")
     public ResponseEntity<?> updateComment(
             @PathVariable Long commentId,
             @RequestBody CreateCommentResource resource
@@ -168,7 +168,7 @@ public class CommentsController {
      * Elimina un comentario existente.
      */
     @DeleteMapping("/{commentId}")
-    @Operation(summary = "Eliminar un comentario")
+    @Operation(summary = "Delete a comment")
     public ResponseEntity<?> deleteComment(
             @PathVariable Long commentId
     ) {

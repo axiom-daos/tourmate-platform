@@ -1,4 +1,3 @@
-
 package axiom.daos.tourmate.platform.feedback_and_tour_reviews.interfaces.rest;
 
 import axiom.daos.tourmate.platform.feedback_and_tour_reviews.application.commandservices.ReviewCommandService;
@@ -41,10 +40,7 @@ import java.util.function.Supplier;
         value = "/api/v1/reviews",
         produces = MediaType.APPLICATION_JSON_VALUE
 )
-@Tag(
-        name = "Reviews",
-        description = "Gestión de reseñas turísticas"
-)
+@Tag(name = "Reviews", description = "Tour review management endpoints")
 public class ReviewsController {
 
     private final ReviewCommandService commandService;
@@ -62,7 +58,7 @@ public class ReviewsController {
      * Obtiene todas las reseñas o filtra por tour.
      */
     @GetMapping
-    @Operation(summary = "Consultar reseñas")
+    @Operation(summary = "Get all reviews")
     public ResponseEntity<?> getReviews(
             @RequestParam(required = false) Long tourId
     ) {
@@ -87,7 +83,7 @@ public class ReviewsController {
      * Obtiene una reseña por su identificador.
      */
     @GetMapping("/{reviewId}")
-    @Operation(summary = "Consultar reseña por ID")
+    @Operation(summary = "Get review by ID")
     public ResponseEntity<?> getReviewById(
             @PathVariable Long reviewId
     ) {
@@ -113,7 +109,7 @@ public class ReviewsController {
      * Registra una nueva reseña.
      */
     @PostMapping
-    @Operation(summary = "Crear una reseña")
+    @Operation(summary = "Create a new review")
     public ResponseEntity<?> createReview(
             @RequestBody CreateReviewResource resource
     ) {
@@ -138,7 +134,7 @@ public class ReviewsController {
      * Actualiza solamente la calificación.
      */
     @PutMapping("/{reviewId}")
-    @Operation(summary = "Actualizar una reseña")
+    @Operation(summary = "Update a review")
     public ResponseEntity<?> updateReview(
             @PathVariable Long reviewId,
             @RequestBody UpdateReviewResource resource
@@ -168,7 +164,7 @@ public class ReviewsController {
      * Elimina una reseña y sus comentarios asociados.
      */
     @DeleteMapping("/{reviewId}")
-    @Operation(summary = "Eliminar una reseña")
+    @Operation(summary = "Delete a review")
     public ResponseEntity<?> deleteReview(
             @PathVariable Long reviewId
     ) {
