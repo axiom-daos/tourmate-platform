@@ -21,7 +21,7 @@ public class TourPersistenceAssembler {
 
         return Tour.reconstitute(
                 entity.getId(),
-                new AgencyId(entity.getAgencyId()),
+                entity.getAgencyId(),
                 TourDetailsPersistenceAssembler.toDomainFromPersistence(entity.getTourDetails()),
                 checkpoints,
                 entity.getStatus());
@@ -33,7 +33,7 @@ public class TourPersistenceAssembler {
         var entity = new TourPersistenceEntity();
 
         entity.setId(tour.getId());
-        entity.setAgencyId(tour.getAgencyId().value());
+        entity.setAgencyId(tour.getAgencyId());
         entity.setTourDetails(TourDetailsPersistenceAssembler.toPersistenceFromDomain(tour.getTourDetails()));
         entity.setCheckpoints(
                 tour.getCheckpoints().stream()
