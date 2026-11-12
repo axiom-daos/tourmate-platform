@@ -35,10 +35,15 @@ public class TourPersistenceAssembler {
         entity.setId(tour.getId());
         entity.setAgencyId(tour.getAgencyId());
         entity.setTourDetails(TourDetailsPersistenceAssembler.toPersistenceFromDomain(tour.getTourDetails()));
-        entity.setCheckpoints(
-                tour.getCheckpoints().stream()
-                        .map(CheckpointPersistenceAssembler::toPersistenceFromDomain).collect(Collectors.toCollection(ArrayList::new))
-        );
+
+        var checkpoints = tour.getCheckpoints().stream()
+                .map(CheckpointPersistenceAssembler::toPersistenceFromDomain)
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        checkpoints.forEach(c -> c.setTour(entity));
+
+        entity.setCheckpoints(checkpoints);
+
         entity.setStatus(tour.getStatus());
 
         return entity;

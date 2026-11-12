@@ -4,12 +4,15 @@ import axiom.daos.tourmate.platform.shared.interfaces.rest.resources.MessageReso
 import axiom.daos.tourmate.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import axiom.daos.tourmate.platform.tour_management.application.commandservices.TourCommandService;
 import axiom.daos.tourmate.platform.tour_management.application.queryservices.TourQueryService;
+import axiom.daos.tourmate.platform.tour_management.domain.model.commands.AddCheckpointToTourCommand;
 import axiom.daos.tourmate.platform.tour_management.domain.model.commands.DeleteTourCommand;
 import axiom.daos.tourmate.platform.tour_management.domain.model.queries.GetAllToursQuery;
 import axiom.daos.tourmate.platform.tour_management.domain.model.queries.GetTourByIdQuery;
+import axiom.daos.tourmate.platform.tour_management.interfaces.rest.resources.AddCheckpointResource;
 import axiom.daos.tourmate.platform.tour_management.interfaces.rest.resources.CreateTourResource;
 import axiom.daos.tourmate.platform.tour_management.interfaces.rest.resources.TourResource;
 import axiom.daos.tourmate.platform.tour_management.interfaces.rest.resources.UpdateTourResource;
+import axiom.daos.tourmate.platform.tour_management.interfaces.rest.transform.AddCheckpointToTourCommandFromResourceAssembler;
 import axiom.daos.tourmate.platform.tour_management.interfaces.rest.transform.CreateTourCommandFromResourceAssembler;
 import axiom.daos.tourmate.platform.tour_management.interfaces.rest.transform.TourResourceFromEntityAssembler;
 import axiom.daos.tourmate.platform.tour_management.interfaces.rest.transform.UpdateTourCommandFromResourceAssembler;
@@ -66,6 +69,38 @@ public class TourController {
 
     }
 
+    @PostMapping("/{tourId}/checkpoints")
+    @Operation(summary = "Add a checkpoint", description = "Add a new checkpoint to an existing tour")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Checkpoint created successfully",
+                    content = @Content(schema = @Schema(implementation = TourResource.class))
+            ),
+            @ApiResponse(responseCode =  "400", description = "Invalid input data"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - JWT token required"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions"),
+            @ApiResponse(responseCode = "404", description = "Tour not found")
+    })
+    public ResponseEntity<?> addCheckpoint(
+            @PathVariable
+            @Parameter(description = "Unique tour identifier", example = "1", required = true)
+            Long tourId,
+            @RequestBody
+            AddCheckpointResource resource
+    ) {
+
+        var addCheckpointToTourCommand = AddCheckpointToTourCommandFromResourceAssembler.toCommandFromResource(tourId, resource);
+        var result = this.tourCommandService.handle(addCheckpointToTourCommand);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                TourResourceFromEntityAssembler::toResourceFromEntity,
+                HttpStatus.CREATED
+        );
+    }
+
+
     @GetMapping("/{tourId}")
     @Operation(summary = "Get tour by ID", description = "Retrieves a specific tour by its unique identifier")
     @ApiResponses(value = {
@@ -81,7 +116,7 @@ public class TourController {
     })
     public ResponseEntity<TourResource> getTourById(
             @PathVariable
-            @Parameter(description = "UNique tour identifier", example = "1", required = true)
+            @Parameter(description = "Unique tour identifier", example = "1", required = true)
             Long tourId
     ) {
 
