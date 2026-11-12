@@ -4,9 +4,11 @@ import axiom.daos.tourmate.platform.shared.application.result.ApplicationError;
 import axiom.daos.tourmate.platform.shared.application.result.Result;
 import axiom.daos.tourmate.platform.tour_management.application.commandservices.TourCommandService;
 import axiom.daos.tourmate.platform.tour_management.domain.model.aggregates.Tour;
+import axiom.daos.tourmate.platform.tour_management.domain.model.commands.AddCheckpointToTourCommand;
 import axiom.daos.tourmate.platform.tour_management.domain.model.commands.CreateTourCommand;
 import axiom.daos.tourmate.platform.tour_management.domain.model.commands.DeleteTourCommand;
 import axiom.daos.tourmate.platform.tour_management.domain.model.commands.UpdateTourCommand;
+import axiom.daos.tourmate.platform.tour_management.domain.model.entities.Checkpoint;
 import axiom.daos.tourmate.platform.tour_management.domain.repositories.TourRepository;
 import org.springframework.stereotype.Service;
 
@@ -70,5 +72,34 @@ public class TourCommandServiceImpl implements TourCommandService {
         } catch (Exception e) {
             return Result.failure(ApplicationError.unexpected("delete-tour", e.getMessage()));
         }
+    }
+
+    @Override
+    public Result<Tour, ApplicationError> handle(AddCheckpointToTourCommand command) {
+
+        var result = this.tourRepository.findById(command.tourId());
+
+        if(result.isEmpty()) {
+            return Result.failure(ApplicationError.notFound("Tour", command.tourId().toString()));
+        }
+
+        var tour = result.get();
+
+        var newCheckpoint = new Checkpoint(
+                command.name(),
+                command.location(),
+                command.order(),
+                command.description());
+
+        tour.addCheckpoint(newCheckpoint);
+
+        try {
+            var tourSaved = this.tourRepository.save(tour);
+            return Result.success(tourSaved);
+
+        } catch (Exception e) {
+            return Result.failure(ApplicationError.unexpected("add-checkpoint", e.getMessage()));
+        }
+
     }
 }
