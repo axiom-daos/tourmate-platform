@@ -47,6 +47,10 @@ public class Tour extends AbstractDomainAggregateRoot<Tour> {
     }
 
     public void makeUnavailable() {
+        if(this.status == TourStatus.DRAFT) {
+            throw new IllegalStateException("Tour with draft status cannot be unavailable");
+        }
+
         if (this.status == TourStatus.UNAVAILABLE) {
             throw new IllegalStateException("Tour is already unavailable");
         }
