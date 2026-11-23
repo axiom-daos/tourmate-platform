@@ -11,7 +11,7 @@ import java.util.Date;
 public class Participant {
 
     private final UserId id;
-    private final LocalDateTime joinedAt;
+    private LocalDateTime joinedAt;
 
     public Participant(UserId id) {
 
@@ -21,6 +21,13 @@ public class Participant {
 
         this.id = id;
         this.joinedAt = LocalDateTime.now();
+    }
+
+    public static Participant reconstitute(UserId id, LocalDateTime joinedAt) {
+        var participant = new Participant(id);
+        participant.joinedAt = joinedAt;
+
+        return participant;
     }
 
 }
