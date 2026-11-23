@@ -9,6 +9,7 @@ import axiom.daos.tourmate.platform.tour_management.domain.model.valueobjects.To
 import axiom.daos.tourmate.platform.tour_management.domain.model.valueobjects.UserId;
 import lombok.Getter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -37,6 +38,8 @@ public class TourSchedule extends AbstractDomainAggregateRoot<TourSchedule> {
         this.tourId = tourId;
         this.departureDateTime = departureDateTime;
         this.maxCapacity = maxCapacity;
+        this.participants = new ArrayList<>();
+        this.status = TourScheduleStatus.OPENED;
     }
 
     public void addParticipant(UserId userId) {
@@ -86,5 +89,22 @@ public class TourSchedule extends AbstractDomainAggregateRoot<TourSchedule> {
         }
 
         this.status = TourScheduleStatus.CLOSED;
+    }
+
+    public static TourSchedule reconstitute(
+            Long id,
+            TourId tourId,
+            DepartureDateTime departureDateTime,
+            int maxCapacity,
+            List<Participant> participants,
+            TourScheduleStatus status) {
+
+        var tourSchedule = new TourSchedule(tourId, departureDateTime, maxCapacity);
+
+        tourSchedule.id = id;
+        tourSchedule.participants = new ArrayList<>(participants);
+        tourSchedule.status = status;
+
+        return tourSchedule;
     }
 }
