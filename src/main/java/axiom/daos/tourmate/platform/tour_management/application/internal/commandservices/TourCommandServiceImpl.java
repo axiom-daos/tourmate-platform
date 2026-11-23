@@ -4,10 +4,7 @@ import axiom.daos.tourmate.platform.shared.application.result.ApplicationError;
 import axiom.daos.tourmate.platform.shared.application.result.Result;
 import axiom.daos.tourmate.platform.tour_management.application.commandservices.TourCommandService;
 import axiom.daos.tourmate.platform.tour_management.domain.model.aggregates.Tour;
-import axiom.daos.tourmate.platform.tour_management.domain.model.commands.AddCheckpointToTourCommand;
-import axiom.daos.tourmate.platform.tour_management.domain.model.commands.CreateTourCommand;
-import axiom.daos.tourmate.platform.tour_management.domain.model.commands.DeleteTourCommand;
-import axiom.daos.tourmate.platform.tour_management.domain.model.commands.UpdateTourCommand;
+import axiom.daos.tourmate.platform.tour_management.domain.model.commands.*;
 import axiom.daos.tourmate.platform.tour_management.domain.model.entities.Checkpoint;
 import axiom.daos.tourmate.platform.tour_management.domain.repositories.TourRepository;
 import org.springframework.stereotype.Service;
@@ -99,6 +96,49 @@ public class TourCommandServiceImpl implements TourCommandService {
 
         } catch (Exception e) {
             return Result.failure(ApplicationError.unexpected("add-checkpoint", e.getMessage()));
+        }
+
+    }
+
+    @Override
+    public Result<Tour, ApplicationError> handle(PublishTourCommand command) {
+        var result = this.tourRepository.findById(command.id());
+
+        if(result.isEmpty()) {
+            return Result.failure(ApplicationError.notFound("Tour", command.id().toString()));
+        }
+
+        var tour = result.get();
+
+        try {
+            tour.publish();
+            var tourSaved = this.tourRepository.save(tour);
+            return Result.success(tourSaved);
+        } catch (IllegalStateException e) {
+            return Result.failure(ApplicationError.conflict("publish-tour", e.getMessage()));
+        } catch (Exception e) {
+            return Result.failure(ApplicationError.unexpected("publish-tour", e.getMessage()));
+        }
+    }
+
+    @Override
+    public Result<Tour, ApplicationError> handle(MakeTourUnavailableCommand command) {
+        var result = this.tourRepository.findById(command.id());
+
+        if(result.isEmpty()) {
+            return Result.failure(ApplicationError.notFound("Tour", command.id().toString()));
+        }
+
+        var tour = result.get();
+
+        try {
+            tour.makeUnavailable();
+            var tourSaved = this.tourRepository.save(tour);
+            return Result.success(tourSaved);
+        } catch (IllegalStateException e) {
+            return Result.failure(ApplicationError.conflict("make-unavailable-tour", e.getMessage()));
+        } catch (Exception e) {
+            return Result.failure(ApplicationError.unexpected("make-unavailable-tour", e.getMessage()));
         }
 
     }
