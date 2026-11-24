@@ -4,7 +4,9 @@ import axiom.daos.tourmate.platform.shared.interfaces.rest.resources.MessageReso
 import axiom.daos.tourmate.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import axiom.daos.tourmate.platform.tour_management.application.commandservices.TourScheduleCommandService;
 import axiom.daos.tourmate.platform.tour_management.application.queryservices.TourScheduleQueryService;
+import axiom.daos.tourmate.platform.tour_management.domain.model.commands.CloseTourScheduleCommand;
 import axiom.daos.tourmate.platform.tour_management.domain.model.commands.DeleteTourScheduleCommand;
+import axiom.daos.tourmate.platform.tour_management.domain.model.commands.OpenTourScheduleCommand;
 import axiom.daos.tourmate.platform.tour_management.domain.model.queries.GetAllTourSchedulesQuery;
 import axiom.daos.tourmate.platform.tour_management.domain.model.queries.GetTourScheduleByIdQuery;
 import axiom.daos.tourmate.platform.tour_management.interfaces.rest.resources.CreateTourScheduleResource;
@@ -51,9 +53,7 @@ public class TourScheduleController {
             @ApiResponse(responseCode =  "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "401", description = "Unauthorized - JWT token required"),
             @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions")
-    }
-
-    )
+    })
     public ResponseEntity<?> createTourSchedule(@RequestBody CreateTourScheduleResource resource) {
 
         var createTourScheduleCommand = CreateTourScheduleCommandFromResourceAssembler.toCommandFromResource(resource);
@@ -64,6 +64,56 @@ public class TourScheduleController {
                 result,
                 TourScheduleResourceFromEntityAssembler::toResourceFromEntity,
                 HttpStatus.CREATED
+        );
+    }
+
+    @PostMapping("/{tourScheduleId}/open")
+    @Operation(summary = "Open a tour schedule")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Tour schedule opened successfully",
+                    content = @Content(schema = @Schema(implementation = TourScheduleResource.class))
+            )
+    })
+    public ResponseEntity<?> openTourSchedule(
+            @PathVariable
+            @Parameter(description = "Unique tour schedule identifier", example = "1", required = true)
+            Long tourScheduleId
+            ) {
+        var openTourScheduleCommand = new OpenTourScheduleCommand(tourScheduleId);
+
+        var result = this.tourScheduleCommandService.handle(openTourScheduleCommand);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                TourScheduleResourceFromEntityAssembler::toResourceFromEntity,
+                HttpStatus.OK
+        );
+    }
+
+    @PostMapping("/{tourScheduleId}/close")
+    @Operation(summary = "Close a tour schedule")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Tour schedule closed successfully",
+                    content = @Content(schema = @Schema(implementation = TourScheduleResource.class))
+            )
+    })
+    public ResponseEntity<?> closeTourSchedule(
+            @PathVariable
+            @Parameter(description = "Unique tour schedule identifier", example = "1", required = true)
+            Long tourScheduleId
+    ) {
+        var closeTourScheduleCommand = new CloseTourScheduleCommand(tourScheduleId);
+
+        var result = this.tourScheduleCommandService.handle(closeTourScheduleCommand);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                TourScheduleResourceFromEntityAssembler::toResourceFromEntity,
+                HttpStatus.OK
         );
     }
 
