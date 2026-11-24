@@ -7,6 +7,7 @@ import axiom.daos.tourmate.platform.iam.domain.model.entities.Role;
 import axiom.daos.tourmate.platform.iam.domain.model.queries.GetUserByIdQuery;
 import axiom.daos.tourmate.platform.iam.domain.model.queries.GetUserByUsernameQuery;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,8 @@ import java.util.List;
  * <p>Provides a simplified integration surface for creating users and querying identity data
  * without leaking IAM internal model details.</p>
  */
+
+@Service
 public class IamContextFacade {
     private final UserCommandService userCommandService;
     private final UserQueryService userQueryService;
