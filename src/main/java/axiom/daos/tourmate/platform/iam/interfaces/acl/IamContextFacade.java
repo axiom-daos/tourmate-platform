@@ -61,6 +61,17 @@ public class IamContextFacade {
     }
 
     /**
+     *
+     * @param userId user identifier
+     * @return true if the user exists; otherwise, false.
+     */
+    public boolean existsUserById(Long userId) {
+        var getUserByIdQuery = new GetUserByIdQuery(userId);
+        var result = userQueryService.handle(getUserByIdQuery);
+        return result.isPresent();
+    }
+
+    /**
      * Fetches the identifier for a username.
      *
      * @param username username to search
