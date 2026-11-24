@@ -4,8 +4,11 @@ import axiom.daos.tourmate.platform.shared.interfaces.rest.resources.MessageReso
 import axiom.daos.tourmate.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import axiom.daos.tourmate.platform.tour_management.application.commandservices.TourCommandService;
 import axiom.daos.tourmate.platform.tour_management.application.queryservices.TourQueryService;
+import axiom.daos.tourmate.platform.tour_management.domain.model.aggregates.Tour;
 import axiom.daos.tourmate.platform.tour_management.domain.model.commands.AddCheckpointToTourCommand;
 import axiom.daos.tourmate.platform.tour_management.domain.model.commands.DeleteTourCommand;
+import axiom.daos.tourmate.platform.tour_management.domain.model.commands.MakeTourUnavailableCommand;
+import axiom.daos.tourmate.platform.tour_management.domain.model.commands.PublishTourCommand;
 import axiom.daos.tourmate.platform.tour_management.domain.model.queries.GetAllToursQuery;
 import axiom.daos.tourmate.platform.tour_management.domain.model.queries.GetTourByIdQuery;
 import axiom.daos.tourmate.platform.tour_management.interfaces.rest.resources.AddCheckpointResource;
@@ -97,6 +100,64 @@ public class TourController {
                 result,
                 TourResourceFromEntityAssembler::toResourceFromEntity,
                 HttpStatus.CREATED
+        );
+    }
+
+    @PostMapping("/{tourId}/publish")
+    @Operation(summary = "Publish tour", description = "Publish a existing tour")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Tour published succesfully",
+                    content = @Content(schema = @Schema(implementation = TourResource.class))
+            ),
+            @ApiResponse(responseCode =  "400", description = "Invalid input data"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - JWT token required"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions"),
+            @ApiResponse(responseCode = "404", description = "Tour not found")
+    })
+    public ResponseEntity<?> publishTour(
+            @PathVariable
+            @Parameter(description = "Unique tour identifier", example = "1", required = true)
+            Long tourId
+    ) {
+        var publishTourCommand = new PublishTourCommand(tourId);
+
+        var result = this.tourCommandService.handle(publishTourCommand);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                TourResourceFromEntityAssembler::toResourceFromEntity,
+                HttpStatus.OK
+        );
+    }
+
+    @PostMapping("/{tourId}/make-unavailable")
+    @Operation(summary = "Make unavailable tour", description = "Make unavailable a existing tour")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Tour unavailable succesfully",
+                    content = @Content(schema = @Schema(implementation = TourResource.class))
+            ),
+            @ApiResponse(responseCode =  "400", description = "Invalid input data"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - JWT token required"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions"),
+            @ApiResponse(responseCode = "404", description = "Tour not found")
+    })
+    public ResponseEntity<?> makeTourUnavailable(
+            @PathVariable
+            @Parameter(description = "Unique tour identifier", example = "1", required = true)
+            Long tourId
+    ) {
+        var maketourUnavailableCommand = new MakeTourUnavailableCommand(tourId);
+
+        var result = this.tourCommandService.handle(maketourUnavailableCommand);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                TourResourceFromEntityAssembler::toResourceFromEntity,
+                HttpStatus.OK
         );
     }
 
