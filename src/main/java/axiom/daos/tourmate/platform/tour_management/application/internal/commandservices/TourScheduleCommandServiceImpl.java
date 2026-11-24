@@ -4,10 +4,14 @@ import axiom.daos.tourmate.platform.shared.application.result.ApplicationError;
 import axiom.daos.tourmate.platform.shared.application.result.Result;
 import axiom.daos.tourmate.platform.tour_management.application.commandservices.TourScheduleCommandService;
 import axiom.daos.tourmate.platform.tour_management.domain.model.aggregates.TourSchedule;
+import axiom.daos.tourmate.platform.tour_management.domain.model.commands.CloseTourScheduleCommand;
 import axiom.daos.tourmate.platform.tour_management.domain.model.commands.CreateTourScheduleCommand;
 import axiom.daos.tourmate.platform.tour_management.domain.model.commands.DeleteTourScheduleCommand;
+import axiom.daos.tourmate.platform.tour_management.domain.model.commands.OpenTourScheduleCommand;
 import axiom.daos.tourmate.platform.tour_management.domain.repositories.TourScheduleRepository;
 import org.springframework.stereotype.Service;
+
+import javax.naming.spi.DirStateFactory;
 
 @Service
 public class TourScheduleCommandServiceImpl implements TourScheduleCommandService {
@@ -50,6 +54,51 @@ public class TourScheduleCommandServiceImpl implements TourScheduleCommandServic
             return Result.success(command.id());
         } catch (Exception e) {
             return Result.failure(ApplicationError.unexpected("delete-tour-schedule", e.getMessage()));
+        }
+    }
+
+    @Override
+    public Result<TourSchedule, ApplicationError> handle(OpenTourScheduleCommand command) {
+
+        var result = this.tourScheduleRepository.findById(command.id());
+
+        if(result.isEmpty()) {
+            return Result.failure(ApplicationError.notFound("Tour-Schedule", command.id().toString()));
+        }
+
+        var tourSchedule = result.get();
+
+        try {
+            tourSchedule.open();
+            var tourScheduleSaved = this.tourScheduleRepository.save(tourSchedule);
+            return Result.success(tourScheduleSaved);
+        } catch (IllegalArgumentException e) {
+            return Result.failure(ApplicationError.conflict("open-tour", e.getMessage()));
+        } catch (Exception e) {
+            return Result.failure(ApplicationError.unexpected("open-tour", e.getMessage()));
+        }
+
+
+    }
+
+    @Override
+    public Result<TourSchedule, ApplicationError> handle(CloseTourScheduleCommand command) {
+        var result = this.tourScheduleRepository.findById(command.id());
+
+        if(result.isEmpty()) {
+            return Result.failure(ApplicationError.notFound("Tour-Schedule", command.id().toString()));
+        }
+
+        var tourSchedule = result.get();
+
+        try {
+            tourSchedule.close();
+            var tourScheduleSaved = this.tourScheduleRepository.save(tourSchedule);
+            return Result.success(tourScheduleSaved);
+        } catch (IllegalArgumentException e) {
+            return Result.failure(ApplicationError.conflict("close-tour", e.getMessage()));
+        } catch (Exception e) {
+            return Result.failure(ApplicationError.unexpected("close-tour", e.getMessage()));
         }
     }
 }
