@@ -4,14 +4,17 @@ import axiom.daos.tourmate.platform.shared.interfaces.rest.resources.MessageReso
 import axiom.daos.tourmate.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import axiom.daos.tourmate.platform.tour_management.application.commandservices.TourScheduleCommandService;
 import axiom.daos.tourmate.platform.tour_management.application.queryservices.TourScheduleQueryService;
+import axiom.daos.tourmate.platform.tour_management.domain.model.commands.AddParticipantCommand;
 import axiom.daos.tourmate.platform.tour_management.domain.model.commands.CloseTourScheduleCommand;
 import axiom.daos.tourmate.platform.tour_management.domain.model.commands.DeleteTourScheduleCommand;
 import axiom.daos.tourmate.platform.tour_management.domain.model.commands.OpenTourScheduleCommand;
 import axiom.daos.tourmate.platform.tour_management.domain.model.queries.GetAllTourSchedulesQuery;
 import axiom.daos.tourmate.platform.tour_management.domain.model.queries.GetTourScheduleByIdQuery;
+import axiom.daos.tourmate.platform.tour_management.interfaces.rest.resources.AddParticipantResource;
 import axiom.daos.tourmate.platform.tour_management.interfaces.rest.resources.CreateTourScheduleResource;
 import axiom.daos.tourmate.platform.tour_management.interfaces.rest.resources.TourResource;
 import axiom.daos.tourmate.platform.tour_management.interfaces.rest.resources.TourScheduleResource;
+import axiom.daos.tourmate.platform.tour_management.interfaces.rest.transform.AddParticipantCommandFromResourceAssembler;
 import axiom.daos.tourmate.platform.tour_management.interfaces.rest.transform.CreateTourScheduleCommandFromResourceAssembler;
 import axiom.daos.tourmate.platform.tour_management.interfaces.rest.transform.TourScheduleResourceFromEntityAssembler;
 import io.swagger.v3.oas.annotations.Operation;
@@ -74,7 +77,10 @@ public class TourScheduleController {
                     responseCode = "200",
                     description = "Tour schedule opened successfully",
                     content = @Content(schema = @Schema(implementation = TourScheduleResource.class))
-            )
+            ),
+            @ApiResponse(responseCode =  "400", description = "Invalid input data"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - JWT token required"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions")
     })
     public ResponseEntity<?> openTourSchedule(
             @PathVariable
@@ -99,7 +105,10 @@ public class TourScheduleController {
                     responseCode = "200",
                     description = "Tour schedule closed successfully",
                     content = @Content(schema = @Schema(implementation = TourScheduleResource.class))
-            )
+            ),
+            @ApiResponse(responseCode =  "400", description = "Invalid input data"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - JWT token required"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions")
     })
     public ResponseEntity<?> closeTourSchedule(
             @PathVariable
@@ -109,6 +118,34 @@ public class TourScheduleController {
         var closeTourScheduleCommand = new CloseTourScheduleCommand(tourScheduleId);
 
         var result = this.tourScheduleCommandService.handle(closeTourScheduleCommand);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                TourScheduleResourceFromEntityAssembler::toResourceFromEntity,
+                HttpStatus.OK
+        );
+    }
+
+    @PostMapping("/{tourScheduleId}/participants")
+    @Operation(summary = "Add a new Participant")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Participant added successfully",
+                    content = @Content(schema = @Schema(implementation = TourScheduleResource.class))
+            ),
+            @ApiResponse(responseCode =  "400", description = "Invalid input data"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - JWT token required"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions")
+    })
+    public ResponseEntity<?> addParticipant(
+            @PathVariable
+            @Parameter(description = "Unique tour schedule identifier", example = "1", required = true)
+            Long tourScheduleId,
+            @RequestBody AddParticipantResource resource
+    ){
+        var addParticipantCommand = AddParticipantCommandFromResourceAssembler.toCommandFromResource(tourScheduleId, resource);
+        var result = this.tourScheduleCommandService.handle(addParticipantCommand);
 
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result,
