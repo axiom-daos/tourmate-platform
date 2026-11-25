@@ -53,13 +53,13 @@ public class TourSchedule extends AbstractDomainAggregateRoot<TourSchedule> {
             throw new IllegalStateException("Tour schedule is full");
         }
 
-        var newParticipant = new Participant(userId);
+        boolean alreadyRegistered = this.participants.stream().anyMatch(p -> p.getId().equals(userId));
 
-        if (this.participants.contains(newParticipant)) {
+        if (alreadyRegistered) {
             throw new IllegalArgumentException("Participant already registered");
         }
 
-        this.participants.add(newParticipant);
+        this.participants.add(new Participant(userId));
     }
 
     public void cancelParticipant(UserId userId) {
