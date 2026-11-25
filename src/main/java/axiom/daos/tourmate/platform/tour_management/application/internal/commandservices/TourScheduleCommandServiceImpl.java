@@ -3,11 +3,10 @@ package axiom.daos.tourmate.platform.tour_management.application.internal.comman
 import axiom.daos.tourmate.platform.shared.application.result.ApplicationError;
 import axiom.daos.tourmate.platform.shared.application.result.Result;
 import axiom.daos.tourmate.platform.tour_management.application.commandservices.TourScheduleCommandService;
+import axiom.daos.tourmate.platform.tour_management.application.internal.outboundservices.acl.ExternalIamService;
 import axiom.daos.tourmate.platform.tour_management.domain.model.aggregates.TourSchedule;
-import axiom.daos.tourmate.platform.tour_management.domain.model.commands.CloseTourScheduleCommand;
-import axiom.daos.tourmate.platform.tour_management.domain.model.commands.CreateTourScheduleCommand;
-import axiom.daos.tourmate.platform.tour_management.domain.model.commands.DeleteTourScheduleCommand;
-import axiom.daos.tourmate.platform.tour_management.domain.model.commands.OpenTourScheduleCommand;
+import axiom.daos.tourmate.platform.tour_management.domain.model.commands.*;
+import axiom.daos.tourmate.platform.tour_management.domain.model.valueobjects.UserId;
 import axiom.daos.tourmate.platform.tour_management.domain.repositories.TourScheduleRepository;
 import org.springframework.stereotype.Service;
 
@@ -17,9 +16,11 @@ import javax.naming.spi.DirStateFactory;
 public class TourScheduleCommandServiceImpl implements TourScheduleCommandService {
 
     private final TourScheduleRepository tourScheduleRepository;
+    private final ExternalIamService externalIamService;
 
-    public TourScheduleCommandServiceImpl(TourScheduleRepository tourScheduleRepository) {
+    public TourScheduleCommandServiceImpl(TourScheduleRepository tourScheduleRepository, ExternalIamService externalIamService) {
         this.tourScheduleRepository = tourScheduleRepository;
+        this.externalIamService = externalIamService;
     }
 
     @Override
@@ -99,6 +100,31 @@ public class TourScheduleCommandServiceImpl implements TourScheduleCommandServic
             return Result.failure(ApplicationError.conflict("close-tour", e.getMessage()));
         } catch (Exception e) {
             return Result.failure(ApplicationError.unexpected("close-tour", e.getMessage()));
+        }
+    }
+
+    @Override
+    public Result<TourSchedule, ApplicationError> handle(AddParticipantCommand command) {
+        var result = this.tourScheduleRepository.findById(command.tourScheduleId());
+
+        if(result.isEmpty()) {
+            return Result.failure(ApplicationError.notFound("Tour-Schedule", command.tourScheduleId().toString()));
+        }
+
+        if(!this.externalIamService.userIsRegistered(new UserId(command.userId()))) {
+            return Result.failure(ApplicationError.notFound("User", command.userId().toString()));
+        }
+
+        var tourSchedule = result.get();
+
+        try {
+            tourSchedule.addParticipant(new UserId(command.userId()));
+            var tourScheduleSaved = this.tourScheduleRepository.save(tourSchedule);
+            return Result.success(tourScheduleSaved);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return Result.failure(ApplicationError.conflict("add-participant", e.getMessage()));
+        } catch (Exception e) {
+            return Result.failure(ApplicationError.unexpected("add-participant", e.getMessage()));
         }
     }
 }
