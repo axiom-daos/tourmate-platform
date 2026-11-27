@@ -2,9 +2,11 @@ package axiom.daos.tourmate.platform.subscriptions_and_payment_management.applic
 
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.application.queryservices.SubscriptionQueryService;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.aggregates.Subscription;
+import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.queries.GetActiveSubscriptionByAgencyIdQuery;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.queries.GetAllSubscriptionsQuery;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.queries.GetSubscriptionByIdQuery;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.queries.GetSubscriptionsByAgencyIdQuery;
+import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.valueobjects.SubscriptionStatus;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.repositories.SubscriptionRepository;
 import org.springframework.stereotype.Service;
 
@@ -36,5 +38,10 @@ public class SubscriptionQueryServiceImpl implements SubscriptionQueryService {
     @Override
     public List<Subscription> handle(GetSubscriptionsByAgencyIdQuery query) {
         return subscriptionRepository.findByAgencyId(query.agencyId());
+    }
+
+    @Override
+    public Optional<Subscription> handle(GetActiveSubscriptionByAgencyIdQuery query) {
+        return subscriptionRepository.findFirstByAgencyIdAndStatus(query.agencyId(), SubscriptionStatus.ACTIVE);
     }
 }

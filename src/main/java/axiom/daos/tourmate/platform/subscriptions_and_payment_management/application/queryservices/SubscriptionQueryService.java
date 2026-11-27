@@ -1,6 +1,7 @@
 package axiom.daos.tourmate.platform.subscriptions_and_payment_management.application.queryservices;
 
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.aggregates.Subscription;
+import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.queries.GetActiveSubscriptionByAgencyIdQuery;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.queries.GetAllSubscriptionsQuery;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.queries.GetSubscriptionByIdQuery;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.queries.GetSubscriptionsByAgencyIdQuery;
@@ -36,4 +37,12 @@ public interface SubscriptionQueryService {
      * @return List of subscriptions belonging to agency
      */
     List<Subscription> handle(GetSubscriptionsByAgencyIdQuery query);
+
+    /**
+     * Handles retrieval of the currently active subscription for a specific agency.
+     *
+     * @param query Query containing agency id
+     * @return Optional containing the active Subscription if found
+     */
+    Optional<Subscription> handle(GetActiveSubscriptionByAgencyIdQuery query);
 }
