@@ -50,7 +50,7 @@ public class TourCommandServiceImpl implements TourCommandService {
         try {
             var tourUpdated = this.tourRepository.save(tourToUpdate.changeDetails(command.tourDetails()));
 
-            return Result.success(tourToUpdate);
+            return Result.success(tourUpdated);
         } catch (Exception e) {
             return Result.failure(ApplicationError.unexpected("update-tour", e.getMessage()));
         }
