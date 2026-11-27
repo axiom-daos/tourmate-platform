@@ -6,6 +6,7 @@ import axiom.daos.tourmate.platform.shared.domain.model.valueobjects.Currency;
 import axiom.daos.tourmate.platform.shared.domain.model.valueobjects.Money;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.application.commandservices.PaymentCommandService;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.aggregates.Payment;
+import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.commands.ConfirmPaymentCommand;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.commands.CreatePaymentCommand;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.repositories.PaymentRepository;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.repositories.PlanRepository;
@@ -43,6 +44,32 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
             return Result.failure(ApplicationError.validationError("Payment", e.getMessage()));
         } catch (Exception e) {
             return Result.failure(ApplicationError.unexpected("create-payment", e.getMessage()));
+        }
+    }
+
+    @Override
+    public Result<Payment, ApplicationError> handle(ConfirmPaymentCommand command) {
+        var existing = paymentRepository.findById(command.paymentId());
+        if (existing.isEmpty()) {
+            return Result.failure(ApplicationError.notFound("Payment", command.paymentId().toString()));
+        }
+
+        var payment = existing.get();
+        if (!payment.isPending()) {
+            return Result.failure(ApplicationError.conflict(
+                    "Payment",
+                    "Payment %d is already in status %s and cannot be confirmed".formatted(payment.getId(), payment.getStatus())
+            ));
+        }
+
+        try {
+            payment.confirm();
+            var savedPayment = paymentRepository.save(payment);
+            return Result.success(savedPayment);
+        } catch (IllegalStateException e) {
+            return Result.failure(ApplicationError.conflict("Payment", e.getMessage()));
+        } catch (Exception e) {
+            return Result.failure(ApplicationError.unexpected("confirm-payment", e.getMessage()));
         }
     }
 }

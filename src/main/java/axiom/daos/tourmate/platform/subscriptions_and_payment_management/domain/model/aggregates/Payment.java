@@ -2,6 +2,7 @@ package axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain
 
 import axiom.daos.tourmate.platform.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
 import axiom.daos.tourmate.platform.shared.domain.model.valueobjects.Money;
+import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.events.PaymentCompletedEvent;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.valueobjects.PaymentStatus;
 import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;
@@ -64,7 +65,7 @@ public class Payment extends AbstractDomainAggregateRoot<Payment> {
     }
 
     /**
-     * Creates a new Payment record.
+     * Creates a new Payment record in {@link PaymentStatus#PENDING} status awaiting confirmation.
      *
      * @param agencyId The agency identifier
      * @param planId The plan identifier
@@ -75,7 +76,7 @@ public class Payment extends AbstractDomainAggregateRoot<Payment> {
         this.agencyId = validateId(agencyId, "Agency id");
         this.planId = validateId(planId, "Plan id");
         this.amount = Objects.requireNonNull(amount, "Amount is required");
-        this.status = PaymentStatus.PAID;
+        this.status = PaymentStatus.PENDING;
         this.requestedAt = new Date();
         this.transactionReference = transactionReference != null && !transactionReference.isBlank()
                 ? transactionReference.trim()
@@ -115,6 +116,20 @@ public class Payment extends AbstractDomainAggregateRoot<Payment> {
     }
 
     /**
+     * Confirms a pending payment, transitioning it to {@link PaymentStatus#PAID}
+     * and registering a {@link PaymentCompletedEvent}.
+     *
+     * @throws IllegalStateException if the payment is not in {@link PaymentStatus#PENDING} state
+     */
+    public void confirm() {
+        if (!isPending()) {
+            throw new IllegalStateException("Only pending payments can be confirmed");
+        }
+        this.status = PaymentStatus.PAID;
+        this.registerDomainEvent(PaymentCompletedEvent.from(this));
+    }
+
+    /**
      * Marks transaction as settled and paid.
      */
     public void markAsPaid() {
@@ -126,6 +141,24 @@ public class Payment extends AbstractDomainAggregateRoot<Payment> {
      */
     public void reject() {
         this.status = PaymentStatus.REJECTED;
+    }
+
+    /**
+     * Checks if the payment is awaiting confirmation.
+     *
+     * @return {@code true} if status is PENDING
+     */
+    public boolean isPending() {
+        return this.status == PaymentStatus.PENDING;
+    }
+
+    /**
+     * Checks if the payment has already been settled.
+     *
+     * @return {@code true} if status is PAID
+     */
+    public boolean isPaid() {
+        return this.status == PaymentStatus.PAID;
     }
 
     private Long validateId(Long id, String fieldName) {
