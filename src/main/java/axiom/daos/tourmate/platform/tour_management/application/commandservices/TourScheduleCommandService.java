@@ -9,6 +9,8 @@ public interface TourScheduleCommandService {
 
     Result<TourSchedule, ApplicationError> handle(CreateTourScheduleCommand command);
 
+    Result<TourSchedule, ApplicationError> handle(UpdateTourSheduleCommand command);
+
     Result<Long, ApplicationError> handle(DeleteTourScheduleCommand command);
 
     Result<TourSchedule, ApplicationError> handle(OpenTourScheduleCommand command);
