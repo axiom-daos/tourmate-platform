@@ -109,6 +109,25 @@ public class Subscription extends AbstractDomainAggregateRoot<Subscription> {
     }
 
     /**
+     * Changes the commercial plan of an active subscription.
+     *
+     * @param newPlanId The target plan identifier
+     * @throws IllegalStateException    if the subscription is not active
+     * @throws IllegalArgumentException if the target plan identifier is invalid or equals the current plan
+     */
+    public void changePlan(Long newPlanId) {
+        if (!isActive()) {
+            throw new IllegalStateException("Only active subscriptions can change plans");
+        }
+        var validatedPlanId = validateId(newPlanId, "New plan id");
+        if (Objects.equals(this.planId, validatedPlanId)) {
+            throw new IllegalArgumentException("Subscription is already assigned to plan " + validatedPlanId);
+        }
+        this.planId = validatedPlanId;
+        this.activatedAt = new Date();
+    }
+
+    /**
      * Checks if the subscription is currently active.
      *
      * @return {@code true} if status is ACTIVE, {@code false} otherwise
