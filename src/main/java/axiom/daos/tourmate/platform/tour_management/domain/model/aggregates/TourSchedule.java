@@ -75,6 +75,19 @@ public class TourSchedule extends AbstractDomainAggregateRoot<TourSchedule> {
 
     }
 
+    public void changeDepartureDateTimeAndMaxCapacity(DepartureDateTime newDepartureDateTime, int newMaxCapacity) {
+
+        if(newDepartureDateTime.value().isBefore(this.departureDateTime.value())) {
+            throw new IllegalArgumentException("New departure datetime cannot be before than current departure datetime");
+        }
+        if(newMaxCapacity < 1) {
+            throw new IllegalArgumentException("New max capacity must be greater than 0");
+        }
+
+        this.departureDateTime = newDepartureDateTime;
+        this.maxCapacity = newMaxCapacity;
+    }
+
     public void open() {
         if(this.status == TourScheduleStatus.OPENED) {
             throw new IllegalArgumentException("Tour schedule is already opened");
