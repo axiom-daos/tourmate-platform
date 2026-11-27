@@ -6,6 +6,7 @@ import axiom.daos.tourmate.platform.tour_management.application.commandservices.
 import axiom.daos.tourmate.platform.tour_management.application.internal.outboundservices.acl.ExternalIamService;
 import axiom.daos.tourmate.platform.tour_management.domain.model.aggregates.TourSchedule;
 import axiom.daos.tourmate.platform.tour_management.domain.model.commands.*;
+import axiom.daos.tourmate.platform.tour_management.domain.model.valueobjects.DepartureDateTime;
 import axiom.daos.tourmate.platform.tour_management.domain.model.valueobjects.UserId;
 import axiom.daos.tourmate.platform.tour_management.domain.repositories.TourScheduleRepository;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,28 @@ public class TourScheduleCommandServiceImpl implements TourScheduleCommandServic
         }
 
         return Result.success(tourSchedule);
+    }
+
+    @Override
+    public Result<TourSchedule, ApplicationError> handle(UpdateTourSheduleCommand command) {
+
+        var result = this.tourScheduleRepository.findById(command.id());
+
+        if(result.isEmpty()) {
+            return Result.failure(ApplicationError.notFound("Tour-schedule", command.id().toString()));
+        }
+
+        var tourSchedule = result.get();
+
+        try {
+            tourSchedule.changeDepartureDateTimeAndMaxCapacity(new DepartureDateTime(command.departureDateTime()), command.maxCapacity());
+            var tourScheduleSaved = this.tourScheduleRepository.save(tourSchedule);
+            return Result.success(tourScheduleSaved);
+        } catch (IllegalArgumentException e) {
+            return Result.failure(ApplicationError.conflict("Tour-Schedule", e.getMessage()));
+        } catch (Exception e) {
+            return Result.failure(ApplicationError.unexpected("update-tour-schedule", e.getMessage()));
+        }
     }
 
     @Override
