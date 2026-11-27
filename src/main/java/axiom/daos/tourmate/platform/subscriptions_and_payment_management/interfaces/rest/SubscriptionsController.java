@@ -10,8 +10,10 @@ import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.queries.GetAllSubscriptionsQuery;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.queries.GetSubscriptionByIdQuery;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.queries.GetSubscriptionsByAgencyIdQuery;
+import axiom.daos.tourmate.platform.subscriptions_and_payment_management.interfaces.rest.resources.ChangeSubscriptionPlanResource;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.interfaces.rest.resources.CreateSubscriptionResource;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.interfaces.rest.resources.SubscriptionResource;
+import axiom.daos.tourmate.platform.subscriptions_and_payment_management.interfaces.rest.transform.ChangeSubscriptionPlanCommandFromResourceAssembler;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.interfaces.rest.transform.CreateSubscriptionCommandFromResourceAssembler;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.interfaces.rest.transform.SubscriptionResourceFromEntityAssembler;
 import io.swagger.v3.oas.annotations.Operation;
@@ -131,6 +133,35 @@ public class SubscriptionsController {
             @Parameter(description = "Reason for cancellation") @RequestParam(required = false, defaultValue = "Unspecified") String reason
     ) {
         var command = new CancelSubscriptionCommand(subscriptionId, reason);
+        var result = subscriptionCommandService.handle(command);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                SubscriptionResourceFromEntityAssembler::toResourceFromEntity,
+                HttpStatus.OK
+        );
+    }
+
+    /**
+     * Change (upgrade or downgrade) the commercial plan of an active subscription.
+     */
+    @PostMapping("/{subscriptionId}/plan-changes")
+    @Operation(
+            summary = "Change subscription plan",
+            description = "Upgrades or downgrades an active subscription to another commercial plan, validating via Tour Management ACL that active tours do not exceed the target plan quota."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Subscription plan changed successfully",
+                    content = @Content(schema = @Schema(implementation = SubscriptionResource.class))),
+            @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "404", description = "Subscription or target plan not found"),
+            @ApiResponse(responseCode = "409", description = "Conflict - Subscription inactive, already on target plan, or active tours exceed target plan quota")
+    })
+    public ResponseEntity<?> changeSubscriptionPlan(
+            @Parameter(description = "Subscription identifier", example = "1", required = true) @PathVariable Long subscriptionId,
+            @RequestBody ChangeSubscriptionPlanResource resource
+    ) {
+        var command = ChangeSubscriptionPlanCommandFromResourceAssembler.toCommandFromResource(subscriptionId, resource);
         var result = subscriptionCommandService.handle(command);
 
         return ResponseEntityAssembler.toResponseEntityFromResult(

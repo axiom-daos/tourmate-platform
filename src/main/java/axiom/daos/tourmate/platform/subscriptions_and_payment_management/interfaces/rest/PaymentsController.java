@@ -6,6 +6,7 @@ import axiom.daos.tourmate.platform.shared.interfaces.rest.transform.ResponseEnt
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.application.commandservices.PaymentCommandService;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.application.queryservices.PaymentQueryService;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.aggregates.Payment;
+import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.commands.ConfirmPaymentCommand;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.queries.GetAllPaymentsQuery;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.queries.GetPaymentByIdQuery;
 import axiom.daos.tourmate.platform.subscriptions_and_payment_management.domain.model.queries.GetPaymentsByAgencyIdQuery;
@@ -113,5 +114,32 @@ public class PaymentsController {
         var payment = paymentQueryService.handle(new GetPaymentByIdQuery(paymentId));
         return payment.map(p -> ResponseEntity.ok(PaymentResourceFromEntityAssembler.toResourceFromEntity(p)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Confirm a pending payment transaction, triggering automatic subscription activation via domain event.
+     */
+    @PostMapping("/{paymentId}/confirmations")
+    @Operation(
+            summary = "Confirm payment",
+            description = "Confirms a pending payment transaction, marks it as PAID, and emits PaymentCompletedEvent to automatically activate or update the agency subscription."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Payment confirmed successfully",
+                    content = @Content(schema = @Schema(implementation = PaymentResource.class))),
+            @ApiResponse(responseCode = "404", description = "Payment not found"),
+            @ApiResponse(responseCode = "409", description = "Conflict - Payment is already confirmed or rejected")
+    })
+    public ResponseEntity<?> confirmPayment(
+            @Parameter(description = "Payment identifier", example = "1", required = true) @PathVariable Long paymentId
+    ) {
+        var command = new ConfirmPaymentCommand(paymentId);
+        var result = paymentCommandService.handle(command);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                PaymentResourceFromEntityAssembler::toResourceFromEntity,
+                HttpStatus.OK
+        );
     }
 }
