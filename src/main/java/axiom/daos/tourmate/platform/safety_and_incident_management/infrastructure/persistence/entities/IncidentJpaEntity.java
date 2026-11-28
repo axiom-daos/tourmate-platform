@@ -9,16 +9,17 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @Entity
 @Table(name = "incidents")
-/**
- * Represents the JPA entity for an incident reported during a tour, mapping to the "incidents" table in the database. It includes fields for tour ID, reporter ID, description, location, status, severity, and resolution information.
- */
 public class IncidentJpaEntity extends AuditableAbstractPersistenceEntity {
+
+    @Column(name = "uuid", nullable = false, unique = true, updatable = false)
+    private UUID uuid;
 
     @Column(name = "active_tour_id", nullable = false)
     private Long activeTourId;
@@ -46,9 +47,9 @@ public class IncidentJpaEntity extends AuditableAbstractPersistenceEntity {
     @Column(nullable = false)
     private IncidentSeverity severity;
 
-    @Column(name = "resolution_note")
+    @Column(name = "resolution_note", length = 1000)
     private String resolutionNote;
 
-    @Column(name = "reporter_role", nullable = false)
+    @Column(name = "reporter_role", nullable = false, length = 30)
     private String reporterRole;
 }
