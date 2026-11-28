@@ -72,4 +72,18 @@ public class User extends AbstractDomainAggregateRoot<User> {
         this.roles.addAll(validatedRoleSet);
         return this;
     }
+
+    /**
+     * Updates the user's encoded password.
+     *
+     * @param encodedPassword the new BCrypt-encoded password
+     * @return the updated user aggregate
+     */
+    public User updatePassword(String encodedPassword) {
+        if (encodedPassword == null || encodedPassword.isBlank()) {
+            throw new IllegalArgumentException("Encoded password cannot be null or blank");
+        }
+        this.password = encodedPassword;
+        return this;
+    }
 }

@@ -2,8 +2,11 @@ package axiom.daos.tourmate.platform.iam.interfaces.rest;
 
 import axiom.daos.tourmate.platform.iam.application.commandservices.UserCommandService;
 import axiom.daos.tourmate.platform.iam.application.queryservices.UserQueryService;
+import axiom.daos.tourmate.platform.iam.domain.model.commands.ResetAllUsersPasswordCommand;
+import axiom.daos.tourmate.platform.iam.domain.model.commands.ResetUserPasswordCommand;
 import axiom.daos.tourmate.platform.iam.domain.model.queries.GetAllUsersQuery;
 import axiom.daos.tourmate.platform.iam.domain.model.queries.GetUserByIdQuery;
+import axiom.daos.tourmate.platform.iam.interfaces.rest.resources.ResetPasswordResource;
 import axiom.daos.tourmate.platform.iam.interfaces.rest.resources.SignUpResource;
 import axiom.daos.tourmate.platform.iam.interfaces.rest.resources.UserResource;
 import axiom.daos.tourmate.platform.iam.interfaces.rest.transform.SignUpCommandFromResourceAssembler;
@@ -17,6 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -147,5 +151,96 @@ public class UsersController {
         }
         var userResource = UserResourceFromEntityAssembler.toResourceFromEntity(user.get());
         return ResponseEntity.ok(userResource);
+    }
+
+    /**
+     * Resets a user's password by username.
+     *
+     * @param resource payload containing username and newPassword
+     * @return updated user resource
+     */
+    @PostMapping("/reset-password")
+    @PutMapping("/reset-password")
+    @Operation(
+            summary = "Reset user password by username",
+            description = "Updates the password for an existing user identified by username."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Password reset successfully"),
+            @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    public ResponseEntity<?> resetPasswordByUsername(
+            @Valid @RequestBody ResetPasswordResource.ResetByUsernameRequest resource
+    ) {
+        var command = new ResetUserPasswordCommand(null, resource.username(), resource.newPassword());
+        var result = userCommandService.handle(command);
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                UserResourceFromEntityAssembler::toResourceFromEntity,
+                HttpStatus.OK
+        );
+    }
+
+    /**
+     * Resets a user's password by user ID.
+     *
+     * @param userId   target user ID
+     * @param resource payload containing newPassword
+     * @return updated user resource
+     */
+    @PutMapping("/{userId}/password")
+    @Operation(
+            summary = "Reset user password by user ID",
+            description = "Updates the password for an existing user identified by ID."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Password reset successfully"),
+            @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    public ResponseEntity<?> resetPasswordById(
+            @PathVariable Long userId,
+            @Valid @RequestBody ResetPasswordResource.ResetByIdRequest resource
+    ) {
+        var command = new ResetUserPasswordCommand(userId, null, resource.newPassword());
+        var result = userCommandService.handle(command);
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                UserResourceFromEntityAssembler::toResourceFromEntity,
+                HttpStatus.OK
+        );
+    }
+
+    /**
+     * Resets the password of all existing users in the system (defaults to {@code 12345678}).
+     *
+     * @param resource optional payload with newPassword
+     * @return count of updated users
+     */
+    @PostMapping("/reset-all-passwords")
+    @Operation(
+            summary = "Reset password for all existing users",
+            description = "Resets the password of every existing user in the system to the specified password (defaults to 12345678)."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "All user passwords reset successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid password")
+    })
+    public ResponseEntity<?> resetAllUsersPasswords(
+            @RequestBody(required = false) ResetPasswordResource.ResetAllRequest resource
+    ) {
+        String password = (resource != null && resource.newPassword() != null && !resource.newPassword().isBlank())
+                ? resource.newPassword()
+                : "12345678";
+        var result = userCommandService.handle(new ResetAllUsersPasswordCommand(password));
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                count -> new ResetPasswordResource.ResetAllResponse(
+                        count,
+                        "Successfully reset passwords for %d users".formatted(count)
+                ),
+                HttpStatus.OK
+        );
     }
 }
