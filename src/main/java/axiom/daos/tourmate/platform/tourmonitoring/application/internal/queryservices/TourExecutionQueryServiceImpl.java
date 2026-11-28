@@ -2,6 +2,7 @@ package axiom.daos.tourmate.platform.tourmonitoring.application.internal.queryse
 
 import axiom.daos.tourmate.platform.shared.application.result.ApplicationError;
 import axiom.daos.tourmate.platform.shared.application.result.Result;
+import axiom.daos.tourmate.platform.tour_management.domain.repositories.TourRepository;
 import axiom.daos.tourmate.platform.tourmonitoring.application.internal.security.TourExecutionAccessPolicy;
 import axiom.daos.tourmate.platform.tourmonitoring.application.queryservices.TourExecutionQueryService;
 import axiom.daos.tourmate.platform.tourmonitoring.domain.model.valueobjects.ExecutionIncidentStatus;
@@ -40,23 +41,34 @@ public class TourExecutionQueryServiceImpl implements TourExecutionQueryService 
     private final TourExecutionPersistenceRepository persistenceRepository;
     private final TourExecutionAccessPolicy accessPolicy;
     private final ActiveTourPersistenceRepository activeTourPersistenceRepository;
+    private final TourRepository tourRepository;
 
     public TourExecutionQueryServiceImpl(
             TourExecutionPersistenceRepository persistenceRepository,
             TourExecutionAccessPolicy accessPolicy
     ) {
-        this(persistenceRepository, accessPolicy, null);
+        this(persistenceRepository, accessPolicy, null, null);
+    }
+
+    public TourExecutionQueryServiceImpl(
+            TourExecutionPersistenceRepository persistenceRepository,
+            TourExecutionAccessPolicy accessPolicy,
+            ActiveTourPersistenceRepository activeTourPersistenceRepository
+    ) {
+        this(persistenceRepository, accessPolicy, activeTourPersistenceRepository, null);
     }
 
     @Autowired
     public TourExecutionQueryServiceImpl(
             TourExecutionPersistenceRepository persistenceRepository,
             TourExecutionAccessPolicy accessPolicy,
-            ActiveTourPersistenceRepository activeTourPersistenceRepository
+            ActiveTourPersistenceRepository activeTourPersistenceRepository,
+            TourRepository tourRepository
     ) {
         this.persistenceRepository = persistenceRepository;
         this.accessPolicy = accessPolicy;
         this.activeTourPersistenceRepository = activeTourPersistenceRepository;
+        this.tourRepository = tourRepository;
     }
 
     @Override
@@ -458,14 +470,40 @@ public class TourExecutionQueryServiceImpl implements TourExecutionQueryService 
 
     private TourExecutionLiveView toLiveViewFromActiveTour(ActiveTourPersistenceEntity at) {
         Long scheduleId = at.getTourScheduleId() != null ? at.getTourScheduleId().tourScheduleId() : 1L;
+        Long tourId = resolveTourIdFromSchedule(scheduleId);
         Long guideId = at.getTourGuideId() != null ? at.getTourGuideId().tourGuideId() : 1L;
         TourStatus status = (at.getFinishedAt() != null && !at.getFinishedAt().isBlank())
                 ? TourStatus.COMPLETED
                 : TourStatus.IN_PROGRESS;
         Instant now = Instant.now();
+
+        List<CheckpointView> checkpoints = List.of();
+        if (tourRepository != null) {
+            checkpoints = tourRepository.findById(tourId)
+                    .map(tour -> tour.getCheckpoints().stream()
+                            .sorted(Comparator.comparingInt(axiom.daos.tourmate.platform.tour_management.domain.model.entities.Checkpoint::getOrder))
+                            .map(cp -> new CheckpointView(
+                                    cp.getId(),
+                                    cp.getName(),
+                                    cp.getOrder(),
+                                    cp.getLocation() != null ? cp.getLocation().x() : at.getCurrentLatitude(),
+                                    cp.getLocation() != null ? cp.getLocation().y() : at.getCurrentLongitude(),
+                                    now.plus(Duration.ofMinutes(30L * cp.getOrder())),
+                                    now.plus(Duration.ofMinutes(45L * cp.getOrder())),
+                                    false,
+                                    null,
+                                    0L,
+                                    false
+                            ))
+                            .toList())
+                    .orElse(List.of());
+        }
+
+        CheckpointView nextCheckpoint = checkpoints.isEmpty() ? null : checkpoints.getFirst();
+
         return new TourExecutionLiveView(
                 at.getId(),
-                scheduleId,
+                tourId,
                 guideId,
                 scheduleId,
                 status,
@@ -477,11 +515,27 @@ public class TourExecutionQueryServiceImpl implements TourExecutionQueryService 
                 null,
                 null,
                 0L,
-                null,
-                List.of(),
+                nextCheckpoint,
+                checkpoints,
                 List.of(),
                 List.of(),
                 List.of()
         );
+    }
+
+    private Long resolveTourIdFromSchedule(Long scheduleId) {
+        if (scheduleId == null) {
+            return 1L;
+        }
+        return switch (scheduleId.intValue()) {
+            case 1, 2 -> 1L;
+            case 3, 4 -> 2L;
+            case 5, 6 -> 3L;
+            case 7, 8 -> 4L;
+            case 9, 10 -> 5L;
+            case 11, 12 -> 6L;
+            case 13, 14 -> 7L;
+            default -> scheduleId;
+        };
     }
 }

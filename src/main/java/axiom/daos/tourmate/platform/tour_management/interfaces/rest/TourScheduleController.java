@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/api/v1/tour-schedules", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = {"/api/v1/tour-schedules", "/api/v1/tour_schedules"}, produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Tour Schedules", description = "Tour schedule management endpoints")
 public class TourScheduleController {
 

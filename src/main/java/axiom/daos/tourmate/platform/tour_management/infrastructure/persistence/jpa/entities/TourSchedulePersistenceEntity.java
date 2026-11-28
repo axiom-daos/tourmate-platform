@@ -25,7 +25,7 @@ public class TourSchedulePersistenceEntity extends AuditableAbstractPersistenceE
     private TourId tourId;
 
     @Convert(converter = DepartureDateTimePersistenceConverter.class)
-    @Column(name = "departure_date_time", nullable = false)
+    @Column(name = "departure_datetime", nullable = false)
     private DepartureDateTime departureDateTime;
 
     @Column(name = "max_capacity", nullable = false)
