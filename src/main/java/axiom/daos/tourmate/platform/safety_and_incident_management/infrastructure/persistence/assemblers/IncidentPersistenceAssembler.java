@@ -4,25 +4,18 @@ import axiom.daos.tourmate.platform.safety_and_incident_management.domain.model.
 import axiom.daos.tourmate.platform.safety_and_incident_management.infrastructure.persistence.entities.IncidentJpaEntity;
 import org.jspecify.annotations.NullMarked;
 
-/**
- * Assembler to map between Incident domain aggregates and IncidentJpaEntity persistence entities.
- */
+import java.util.UUID;
+
 @NullMarked
 public final class IncidentPersistenceAssembler {
 
     private IncidentPersistenceAssembler() {
-        // Private constructor to prevent instantiation
     }
 
-    /**
-     * Maps a JPA persistence entity to a Domain aggregate.
-     *
-     * @param entity the IncidentJpaEntity
-     * @return the Incident domain aggregate
-     */
     public static Incident toEntityFromJpaEntity(IncidentJpaEntity entity) {
         return Incident.reconstitute(
                 entity.getId(),
+                entity.getUuid(),
                 entity.getActiveTourId(),
                 entity.getReportedByUserId(),
                 entity.getDescription(),
@@ -36,17 +29,12 @@ public final class IncidentPersistenceAssembler {
         );
     }
 
-    /**
-     * Maps a Domain aggregate to a JPA persistence entity.
-     *
-     * @param incident the Incident domain aggregate
-     * @return the IncidentJpaEntity persistence entity
-     */
     public static IncidentJpaEntity toJpaEntityFromEntity(Incident incident) {
         IncidentJpaEntity entity = new IncidentJpaEntity();
         if (incident.getId() != null) {
             entity.setId(incident.getId());
         }
+        entity.setUuid(incident.getUuid() != null ? incident.getUuid() : UUID.randomUUID());
         entity.setActiveTourId(incident.getActiveTourId());
         entity.setReportedByUserId(incident.getReportedByUserId());
         entity.setDescription(incident.getDescription());
