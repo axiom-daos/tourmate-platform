@@ -103,7 +103,18 @@ public class WebSecurityConfiguration {
                 .exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(unauthorizedRequestHandler))
                 .sessionManagement( customizer -> customizer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers(HttpMethod.POST, "/api/v1/users", "/api/v1/tokens").permitAll()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/users",
+                                "/api/v1/tokens",
+                                "/api/v1/users/reset-password",
+                                "/api/v1/users/reset-all-passwords"
+                        ).permitAll()
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/v1/users/reset-password",
+                                "/api/v1/users/*/password"
+                        ).permitAll()
                         .requestMatchers(
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
