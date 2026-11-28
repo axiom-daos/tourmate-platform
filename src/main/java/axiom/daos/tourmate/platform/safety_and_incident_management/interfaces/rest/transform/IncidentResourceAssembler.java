@@ -4,25 +4,19 @@ import axiom.daos.tourmate.platform.safety_and_incident_management.domain.model.
 import axiom.daos.tourmate.platform.safety_and_incident_management.interfaces.rest.resources.IncidentResource;
 import org.jspecify.annotations.NullMarked;
 
-@NullMarked
 /**
- * Provides utility methods to transform Incident domain aggregates into IncidentResource representations for RESTful API responses.
+ * Utility class that maps {@link Incident} domain aggregates to {@link IncidentResource} REST payloads.
  */
+@NullMarked
 public final class IncidentResourceAssembler {
-    /**
-     * Private constructor to prevent instantiation of the utility class.
-     */
+
     private IncidentResourceAssembler() {
     }
 
-    /**
-     * Transforms an Incident domain aggregate into an IncidentResource representation.
-     * @param entity
-     * @return
-     */
     public static IncidentResource toResourceFromEntity(Incident entity) {
         return new IncidentResource(
                 entity.getId(),
+                entity.getUuid(),
                 entity.getActiveTourId(),
                 entity.getReportedByUserId(),
                 entity.getDescription(),
