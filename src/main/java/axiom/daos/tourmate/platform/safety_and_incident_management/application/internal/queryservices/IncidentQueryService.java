@@ -3,45 +3,45 @@ package axiom.daos.tourmate.platform.safety_and_incident_management.application.
 import axiom.daos.tourmate.platform.safety_and_incident_management.domain.model.aggregates.Incident;
 import axiom.daos.tourmate.platform.safety_and_incident_management.domain.persistence.IncidentRepository;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
+/**
+ * Application service handling read queries for incidents.
+ */
 @NullMarked
 @Service
-/**
- * Service class for handling queries related to incidents, such as retrieving all incidents or a specific incident by ID.
- */
+@Transactional(readOnly = true)
 public class IncidentQueryService {
-    /**
-     * The repository used for incident data access.
-     */
+
     private final IncidentRepository incidentRepository;
-/**
-     * Constructs an IncidentQueryService with the specified IncidentRepository.
-     *
-     * @param incidentRepository the repository used for incident data access
-     */
+
     public IncidentQueryService(IncidentRepository incidentRepository) {
         this.incidentRepository = incidentRepository;
     }
-/**
-     * Retrieves all incidents from the repository.
-     *
-     * @return a list of all incidents
-     */
+
     public List<Incident> getAllIncidents() {
         return incidentRepository.findAll();
     }
-/**
-     * Retrieves an incident by its ID from the repository.
-     *
-     * @param id the ID of the incident to retrieve
-     * @return an Optional containing the incident if found, or empty if not found
-     */
-    public Optional<Incident> getIncidentById(Long id) {
+
+    public Optional<Incident> getIncidentById(@Nullable Long id) {
+        if (id == null || id <= 0) {
+            return Optional.empty();
+        }
         return incidentRepository.findById(id);
     }
 
+    public Optional<Incident> getIncidentByUuid(@Nullable UUID uuid) {
+        if (uuid == null) {
+            return Optional.empty();
+        }
+        return incidentRepository.findAll().stream()
+                .filter(incident -> uuid.equals(incident.getUuid()))
+                .findFirst();
+    }
 }
