@@ -64,6 +64,30 @@ public record ApplicationError(
     }
 
     /**
+     * Explicit domain state conflict with a stable machine-readable code (HTTP 409).
+     */
+    public static ApplicationError stateConflict(String code, String message, String details) {
+        return new ApplicationError(code, message, details);
+    }
+
+    /**
+     * Explicit domain business rule violation with a stable machine-readable code (HTTP 422).
+     */
+    public static ApplicationError domainRule(String code, String message, String details) {
+        return new ApplicationError(code, message, details);
+    }
+
+    /**
+     * Forbidden error: authenticated principal lacks role or resource ownership (HTTP 403).
+     */
+    public static ApplicationError forbidden(String resourceOrAction, String reason) {
+        return new ApplicationError(
+                "FORBIDDEN",
+                "Access denied: %s".formatted(resourceOrAction),
+                reason);
+    }
+
+    /**
      * Unexpected error: something went wrong that shouldn't have
      */
     public static ApplicationError unexpected(String context, String reason) {

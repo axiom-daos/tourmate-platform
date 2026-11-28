@@ -41,6 +41,7 @@ public final class ProblemDetailFromApplicationErrorAssembler {
         problemDetail.setType(toProblemTypeUri(error.code()));
         problemDetail.setTitle(toProblemTitle(error.code(), status));
         problemDetail.setProperty("code", error.code());
+        problemDetail.setProperty("errorCode", error.code());
 
         if (error.details() != null && !error.details().isBlank()) {
             problemDetail.setProperty("details", error.details());
@@ -63,10 +64,18 @@ public final class ProblemDetailFromApplicationErrorAssembler {
     private static URI toProblemTypeUri(String errorCode) {
         String slug = switch (errorCode) {
             case "VALIDATION_ERROR" -> "validation-error";
-            case "BUSINESS_RULE_VIOLATION" -> "business-rule-violation";
+            case "FORBIDDEN" -> "forbidden";
+            case "BUSINESS_RULE_VIOLATION",
+                 "INSUFFICIENT_CHECK_INS",
+                 "UNRESOLVED_CRITICAL_INCIDENTS",
+                 "GUIDE_NOT_ENABLED" -> "business-rule-violation";
+            case "INVALID_STATE_TRANSITION",
+                 "CHECKPOINT_ALREADY_REACHED",
+                 "INCIDENT_ALREADY_RESOLVED" -> "state-conflict";
             case "UNEXPECTED_ERROR" -> "unexpected-error";
             case String s when s.endsWith("_NOT_FOUND") -> "not-found";
             case String s when s.endsWith("_CONFLICT") -> "conflict";
+            case String s when s.endsWith("_FORBIDDEN") -> "forbidden";
             default -> errorCode.toLowerCase(Locale.ROOT).replace('_', '-');
         };
         return URI.create(ERROR_TYPE_PREFIX + slug);
@@ -75,9 +84,17 @@ public final class ProblemDetailFromApplicationErrorAssembler {
     private static String toProblemTitle(String errorCode, HttpStatusCode status) {
         return switch (errorCode) {
             case "VALIDATION_ERROR" -> "Validation Error";
-            case "BUSINESS_RULE_VIOLATION" -> "Business Rule Violation";
+            case "FORBIDDEN" -> "Forbidden";
+            case "BUSINESS_RULE_VIOLATION",
+                 "INSUFFICIENT_CHECK_INS",
+                 "UNRESOLVED_CRITICAL_INCIDENTS",
+                 "GUIDE_NOT_ENABLED" -> "Business Rule Violation";
+            case "INVALID_STATE_TRANSITION",
+                 "CHECKPOINT_ALREADY_REACHED",
+                 "INCIDENT_ALREADY_RESOLVED" -> "State Conflict";
             case String s when s.endsWith("_NOT_FOUND") -> "Resource Not Found";
             case String s when s.endsWith("_CONFLICT") -> "Resource Conflict";
+            case String s when s.endsWith("_FORBIDDEN") -> "Forbidden";
             default -> status instanceof HttpStatus httpStatus ? httpStatus.getReasonPhrase() : "Error";
         };
     }
@@ -160,8 +177,16 @@ public final class ProblemDetailFromApplicationErrorAssembler {
     public static HttpStatusCode toStatusFromErrorCode(String errorCode) {
         return switch (errorCode) {
             case "VALIDATION_ERROR" -> HttpStatus.BAD_REQUEST;
+            case "FORBIDDEN" -> HttpStatus.FORBIDDEN;
+            case String s when s.endsWith("_FORBIDDEN") -> HttpStatus.FORBIDDEN;
             case String s when s.endsWith("_NOT_FOUND") -> HttpStatus.NOT_FOUND;
-            case "BUSINESS_RULE_VIOLATION" -> HttpStatusCode.valueOf(422);
+            case "BUSINESS_RULE_VIOLATION",
+                 "INSUFFICIENT_CHECK_INS",
+                 "UNRESOLVED_CRITICAL_INCIDENTS",
+                 "GUIDE_NOT_ENABLED" -> HttpStatusCode.valueOf(422);
+            case "INVALID_STATE_TRANSITION",
+                 "CHECKPOINT_ALREADY_REACHED",
+                 "INCIDENT_ALREADY_RESOLVED" -> HttpStatus.CONFLICT;
             case String s when s.endsWith("_CONFLICT") -> HttpStatus.CONFLICT;
             default -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
