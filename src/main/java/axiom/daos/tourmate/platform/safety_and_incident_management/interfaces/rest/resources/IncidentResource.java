@@ -1,0 +1,24 @@
+package axiom.daos.tourmate.platform.safety_and_incident_management.interfaces.rest.resources;
+
+import org.jspecify.annotations.Nullable;
+
+import java.util.Date;
+import java.util.UUID;
+
+/**
+ * REST response representation of a tour safety incident.
+ */
+public record IncidentResource(
+        @Nullable Long id,
+        UUID uuid,
+        Long activeTourId,
+        Long reportedByUserId,
+        String description,
+        Double latitude,
+        Double longitude,
+        Date reportedAt,
+        String status,
+        String severity,
+        String resolutionNote,
+        String reporterRole
+) {}
